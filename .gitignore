@@ -10,3 +10,4 @@ docs/make.bat
 /*.egg-info
 *.json
 __pycache__
+*.csv

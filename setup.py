@@ -19,6 +19,6 @@ setup(name='fastinference',
       "onnx",
       "onnxruntime",
       "xgboost",
-      "PyPruning @ git+https://git@github.com/sbuschjaeger/PyPruning.git"
+      # "PyPruning @ git+https://git@github.com/sbuschjaeger/PyPruning.git"
     ]
 )

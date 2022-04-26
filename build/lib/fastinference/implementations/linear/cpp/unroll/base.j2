@@ -1,0 +1,11 @@
+namespace {{namespace}} {
+
+{{ code_static }}
+
+void predict_{{model.name}}({{ feature_type }} const * const x, {{ label_type }} * pred) {
+    {% for c1 in model.coef %}
+pred[{{loop.index-1}}] += {{model.intercept[loop.index-1]}} {% for c2 in c1 %}  + x[{{loop.index-1}}]*{{c2}} {% endfor %};
+    {% endfor %}
+}
+
+}

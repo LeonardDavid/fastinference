@@ -1,0 +1,40 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/mnt/c/Users/leona/projects/tu-dortmund/fastinference/tmp/fastinference/cnntest/main.cpp
+iostream
+-
+chrono
+-
+algorithm
+-
+fstream
+-
+sstream
+-
+vector
+-
+tuple
+-
+assert.h
+-
+model.h
+/mnt/c/Users/leona/projects/tu-dortmund/fastinference/tmp/fastinference/cnntest/model.h
+
+/mnt/c/Users/leona/projects/tu-dortmund/fastinference/tmp/fastinference/cnntest/model.cpp
+math.h
+-
+stdint.h
+-
+limits
+-
+algorithm
+-
+
+/mnt/c/Users/leona/projects/tu-dortmund/fastinference/tmp/fastinference/cnntest/model.h
+

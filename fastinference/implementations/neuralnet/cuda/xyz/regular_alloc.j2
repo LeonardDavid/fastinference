@@ -1,0 +1,12 @@
+{#
+ # Allocation
+ #}
+static {{ output_type }} cuda_layer_{{ layer_id }}_output
+{% if output_shape|length > 2 %}
+    [{{batch_size}} * {{ output_shape[2] }} * {{ output_shape[3] }} * {{ output_shape[1] }}]
+{% else %}
+    [{{batch_size}} * {{ output_shape[1] }}]
+{% endif %}
+{% if align > 1 %} 
+    __attribute__((aligned({{ align }})))
+{% endif %};

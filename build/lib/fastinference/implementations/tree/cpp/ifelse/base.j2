@@ -1,0 +1,66 @@
+namespace {{namespace}} {
+
+{# Regular if-else implementation. Recursivley call the ifelse macro with the correct indent and thats it. A return statement is added to the predictions to make sure this macro work well with labels / gotos (used below) #}
+{% macro ifelse(nodes,node, tree_weight) %}
+    {% if node.prediction is not none %} 
+    {% for pred in node.prediction %}
+    pred[{{loop.index-1}}] += {{pred*tree_weight}};
+    {% endfor %} 
+    return;
+    {% else %}   
+    if (x[{{node.feature}}] <= {{node.split}}) {
+        {{ifelse(nodes,node.leftChild, tree_weight)|indent}}
+    } else {
+        {{ifelse(nodes,node.rightChild, tree_weight)|indent}}
+    }
+    {% endif %} 
+{% endmacro %}
+
+{# If-else implementation with goto labels. Whenever a node is not in the computation kernel the generation of the if-else tree. A return statement is added to the predictions to make sure this macro work well with labels / gotos (used below) #}
+{% macro kernel_ifelse(nodes, node, tree_weight, kernel) %}
+    {% if node.prediction is not none %}
+        {% for pred in node.prediction %}
+        pred[{{loop.index-1}}] += {{pred*tree_weight}};
+        {% endfor %}
+        return;
+    {% else %}   
+        if (x[{{node.feature}}] <= {{node.split}}) {
+            {% if kernel[node.leftChild.id] %}
+                {{kernel_ifelse(nodes, node.leftChild, tree_weight, kernel)|indent}}
+            {%- else -%}
+                goto Label{{node.leftChild.id}};
+            {% endif %}
+        } else {
+            {% if kernel[node.rightChild.id] %}
+                {{kernel_ifelse(nodes, node.rightChild, tree_weight, kernel)|indent}}
+            {%- else -%}
+                goto Label{{node.rightChild.id}};
+            {% endif %}
+        }
+    {% endif %} 
+{% endmacro %}
+
+{# Only generate the code for the goto-labels from above. If a node is not part of the computation kernel, then use the ifelse macro to generate the remaining parts of the tree. #}
+{% macro kernel_only(nodes, node, tree_weight, kernel) %}
+    {%- if not kernel[node.id] -%}
+        Label{{node.id}}: {
+            {{ifelse(nodes,node, tree_weight)|indent}}
+        }
+    {% else %}
+        {% if node.prediction is none %}
+            {{kernel_only(nodes, node.leftChild, tree_weight, kernel)}}
+            {{kernel_only(nodes, node.rightChild, tree_weight, kernel)}}
+        {% endif %}        
+    {% endif %}
+{% endmacro %}
+
+void predict_{{model.name}}({{ feature_type }} const * const x, {{ label_type }} * pred) {
+    {% if kernel is none %}
+        {{ifelse(model.nodes,model.head,weight)|indent}}
+    {% else %}  
+        {{kernel_ifelse(model.nodes,model.head,weight,kernel)|indent}}
+        {{kernel_only(model.nodes,model.head,weight,kernel)|indent}}
+    {% endif %}
+}
+
+}

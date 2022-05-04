@@ -12,6 +12,7 @@ setup(name='fastinference',
       #scripts=["fastinference/fastinference.py"],
       zip_safe=False,
       packages=find_packages(),#include=['fastinference', 'fastinference.models', 'fastinference.models.nn'])
+      # include=['fastinference.implementations.neuralnet.cuda'],
       include_package_data = True,
       package_data = {'': ['*.j2'],},
       install_requires = [

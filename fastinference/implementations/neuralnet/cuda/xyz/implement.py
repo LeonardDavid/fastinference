@@ -185,14 +185,16 @@ def render(layer, input_type, layer_id = 0, is_first = False, float_type = "doub
                 output_type = output_type,
                 layer_id = layer_id,
                 align = align,
-                binary_word_size = binary_word_size
+                binary_word_size = binary_word_size,
+                batch_size = batch_size
             )
         elif not isinstance(layer, Reshape):    
             code_alloc = env.get_template('regular_alloc.j2').render(
                 output_shape = layer.output_shape, 
                 output_type = output_type,
                 layer_id = layer_id,
-                align = align
+                align = align,
+                batch_size = batch_size
             )
 
         code_init = ""

@@ -124,4 +124,4 @@ cp ./tests/CMakeLists.txt $OUTPATH
 cd $OUTPATH
 cmake . -DMODELNAME=$MODELNAME -DFEATURE_TYPE=$FEATURE_TYPE
 make
-./testCode testing.csv 1
+# ./testCode testing.csv 1

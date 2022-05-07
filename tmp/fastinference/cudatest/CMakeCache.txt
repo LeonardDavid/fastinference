@@ -210,10 +210,10 @@ CMAKE_STRIP:FILEPATH=/usr/bin/strip
 CMAKE_VERBOSE_MAKEFILE:BOOL=FALSE
 
 //Data type of input features, e.g. int or double
-FEATURE_TYPE:STRING=double
+FEATURE_TYPE:STRING=int
 
 //Data type of labels, e.g. int or double
-LABEL_TYPE:STRING=double
+LABEL_TYPE:STRING=int
 
 //No help, variable specified on the command line.
 MODELNAME:UNINITIALIZED=cudatest

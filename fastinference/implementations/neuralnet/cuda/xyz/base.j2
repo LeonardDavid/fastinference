@@ -3,6 +3,12 @@
 #include <limits>
 #include <algorithm>
 #include <cstdint>
+#include <fstream>
+#include <iostream>
+
+#include "utils.h"
+
+using namespace std;
 
 namespace {{namespace}} {
 
@@ -10,10 +16,14 @@ namespace {{namespace}} {
 
 void predict_{{name}}({{ feature_type }} const * const x, {{ label_type }} * pred) {
     auto layer_{{ in_layer_id }}_output = x;
+    double sum_cpu = 0, sum_gpu = 0;
+
 	{{ code_predict|indent(4) }}
 
-    for (int i = 0; i < {{ n_classes }}; i++) {
-        pred[i] += {% if weight != 1.0 %}{{ weight }} * {% endif %}layer_{{ out_layer_id }}_output[i];
+    for(int b = 0; b < {{batch_size}}; b++){
+      for (int i = 0; i < {{ n_classes }}; i++) {
+        pred[i] += {% if weight != 1.0 %}{{ weight }} * {% endif %}cuda_layer_{{ out_layer_id }}_output[b*{{ n_classes }} + i];
+      }
     }
 }
 

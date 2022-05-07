@@ -6,5 +6,5 @@ namespace FAST_INFERENCE {
     #define N_CLASSES 10
     #define N_FEATURES 784
 
-    void predict_cudatest(double const * const x, double * pred);
+    void predict_cudatest(int const * const x, int * pred);
 }

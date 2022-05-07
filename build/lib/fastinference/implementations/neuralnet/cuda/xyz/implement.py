@@ -100,12 +100,23 @@ def larger_datatype(dtype1, dtype2):
 
     return dtype1
 
-def render(layer, input_type, layer_id = 0, is_first = False, float_type = "double", int_type = "int", uint_type = "unsigned int", infer_types = False, align = 0, popcount = None, batch_size = 1):
+def render(layer, input_type, layer_id = 0, is_first = False, float_type = "double", int_type = "int", uint_type = "unsigned int", infer_types = False, align = 0, popcount = None, batch_size = 1, reshape_layer_id = 0, step_layer_ids = []):
 
     env = Environment(
         loader=FileSystemLoader(os.path.join(os.path.dirname(os.path.abspath(__file__)))),
         trim_blocks=True, lstrip_blocks=True, keep_trailing_newline=True
     )
+
+    # print("CURRENT LAYER {}: {}".format(layer_id, layer.name))
+    is_first_gemm_after_reshape = False
+    if layer_id == reshape_layer_id + 2: # different numbering here than in original loop  
+        # print("isfgar LAYER {} ({})".format(layer_id, reshape_layer_id))
+        is_first_gemm_after_reshape = True
+    
+    prev_layer_is_step = False
+    if layer_id-1 in step_layer_ids:
+        # print("PREV STEP LAYER FOUND AT {}",layer_id)
+        prev_layer_is_step = True
 
     if infer_types:
         if isinstance(layer, (Conv2D, Gemm)):
@@ -162,7 +173,8 @@ def render(layer, input_type, layer_id = 0, is_first = False, float_type = "doub
 
         code_predict = env.get_template('regular_' + layer.name + '.j2').render(
             layer = layer,
-            layer_id = layer_id
+            layer_id = layer_id,
+            batch_size = batch_size
         )
     else:
         binary_word_size = infer_binary_wordsize(uint_type)
@@ -295,12 +307,15 @@ def render(layer, input_type, layer_id = 0, is_first = False, float_type = "doub
             float_type = float_type,
             popcount = popcount,
             output_type = output_type,
-            input_type = input_type
+            input_type = input_type,
+            is_first_gemm_after_reshape = is_first_gemm_after_reshape,
+            prev_layer_is_step = prev_layer_is_step,
+            batch_size = batch_size
         )
 
     return code_alloc, code_init, code_predict, output_type
 
-def to_implementation(model, out_path, out_name, weight = 1.0, namespace = "FAST_INFERENCE", align = 0, feature_type = "double", label_type = "double", float_type = "double", int_type = "signed int", uint_type = "unsigned int", infer_types = True, popcount = None, batch_size = 1, **kwargs):
+def to_implementation(model, out_path, out_name, weight = 1.0, namespace = "FAST_INFERENCE", align = 0, feature_type = "int", label_type = "int", float_type = "double", int_type = "signed int", uint_type = "unsigned int", infer_types = True, popcount = None, batch_size = 1, **kwargs):
     """
     Generates a C++ implementation of the given binarized NeuralNet model by using the XNOR and popcount operations whenever possible. 
     When infer_types is true, this implementation tries to infer the smallest possible data type which still guarantees a correct execution. 
@@ -355,8 +370,23 @@ def to_implementation(model, out_path, out_name, weight = 1.0, namespace = "FAST
     flatten = None
     input_type = feature_type
     is_first = True
+    step_layer_ids = []
+    
     for layer_id, layer in enumerate(model.layers):
-        print("IMPLEMENTING {}".format(layer.name))
+        # print("CURRENT LAYER {}: {}".format(layer_id, layer.name))
+        # e.g. after the reshape, the first gemm layer has slightly different syntax to the other gemm layers
+        if isinstance(layer, Reshape):
+            reshape_layer_id = layer_id
+        
+        if isinstance(layer, Step):
+            step_layer_ids.append(layer_id+1)
+
+    print("STEP layers: {}".format(step_layer_ids))
+
+    for layer_id, layer in enumerate(model.layers):
+        print("IMPLEMENTING {}: {}".format(layer_id, layer.name))
+        # if layer_id == reshape_layer_id + 1:
+        #     print("FIRST GEMM LAYER!")
 
         if isinstance(layer, Reshape) and len(layer.output_shape) > 2:
             layer.output_shape = (layer.output_shape[0], *layer.output_shape[2:], layer.output_shape[1])
@@ -387,6 +417,8 @@ def to_implementation(model, out_path, out_name, weight = 1.0, namespace = "FAST
             infer_types = infer_types,
             input_type = input_type,
             popcount = popcount,
+            reshape_layer_id = reshape_layer_id,
+            step_layer_ids = step_layer_ids,
             batch_size = batch_size
         )
 
@@ -411,7 +443,8 @@ def to_implementation(model, out_path, out_name, weight = 1.0, namespace = "FAST
         namespace = namespace,
         code_static = code_static,
         label_type = label_type,
-        n_classes = model.n_classes
+        n_classes = model.n_classes,
+        batch_size = batch_size
     )
 
     header = env.get_template("header.j2").render(
@@ -422,8 +455,15 @@ def to_implementation(model, out_path, out_name, weight = 1.0, namespace = "FAST
         label_type = label_type
     )
 
+    utils = env.get_template("utils.j2").render(
+
+    )
+
     with open(os.path.join(out_path, "{}.{}".format(out_name,"cpp") ), 'w') as out_file:
         out_file.write(implementation)
 
     with open(os.path.join(out_path, "{}.{}".format(out_name,"h")), 'w') as out_file:
-        out_file.write(header)    
+        out_file.write(header)
+
+    with open(os.path.join(out_path, "{}.{}".format("utils","h")), 'w') as out_file:
+        out_file.write(utils)    

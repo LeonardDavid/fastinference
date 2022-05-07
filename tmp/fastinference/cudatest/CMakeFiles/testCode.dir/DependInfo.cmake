@@ -11,8 +11,8 @@ set(CMAKE_CXX_COMPILER_ID "GNU")
 
 # Preprocessor definitions for this target.
 set(CMAKE_TARGET_DEFINITIONS_CXX
-  "FEATURE_TYPE=double"
-  "LABEL_TYPE=double"
+  "FEATURE_TYPE=int"
+  "LABEL_TYPE=int"
   "predict=predict_cudatest"
   )
 

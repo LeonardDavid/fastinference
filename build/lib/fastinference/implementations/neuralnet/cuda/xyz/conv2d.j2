@@ -4,16 +4,24 @@
 
 // Layer {{ layer_id }}: Conv
 {% if layer.pads == [0, 0, 0, 0] %}
-for (int h = 0; h < {{ layer.output_shape[2] }}; h++) {
-  for (int w = 0; w < {{ layer.output_shape[3] }}; w++) {
-    for (int m = 0; m < {{ layer.output_shape[1] }}; m++) {
-      layer_{{ layer_id }}_output[h][w][m] = layer_{{ layer_id }}_bias[m];
-    }
-    for (int kH = 0; kH < {{ layer.kernel_shape[2] }}; kH++) {
-      for (int kW = 0; kW < {{ layer.kernel_shape[3] }}; kW++) {
-        for (int m = 0; m < {{ layer.output_shape[1] }}; m++) {
-          for (int c = 0; c < {{ (layer.input_shape[1] / binary_word_size)|round(method='ceil')|int }}; c++) {
-            layer_{{ layer_id }}_output[h][w][m] += 2 * {{ popcount }}(({{ uint_type }})~({{ uint_type }})(layer_{{ layer_id }}_weight[kH][kW][m][c] ^ layer_{{ layer_id - 1 }}_output[h * {{ layer.strides[0] }} + kH - {{ layer.pads[0] }}][w * {{ layer.strides[1] }} + kW - {{ layer.pads[1] }}][c])) - {{ binary_word_size }};
+for(int b = 0; b < {{batch_size}}; b++){
+  for (int h = 0; h < {{ layer.output_shape[2] }}; h++) {
+    for (int w = 0; w < {{ layer.output_shape[3] }}; w++) {
+      for (int m = 0; m < {{ layer.output_shape[1] }}; m++) {
+        //layer_{{ layer_id }}_output[b][h][w][m] = layer_{{ layer_id }}_bias[m];
+        cuda_layer_{{ layer_id }}_output[index4D(b,h,w,m,{{ layer.output_shape[2] }},{{ layer.output_shape[3] }},{{ layer.output_shape[1] }})] = layer_{{ layer_id }}_bias[m];
+      }
+      for (int kH = 0; kH < {{ layer.kernel_shape[2] }}; kH++) {
+        for (int kW = 0; kW < {{ layer.kernel_shape[3] }}; kW++) {
+          for (int m = 0; m < {{ layer.output_shape[1] }}; m++) {
+            for (int c = 0; c < {{ (layer.input_shape[1] / binary_word_size)|round(method='ceil')|int }}; c++) {
+              //layer_{{ layer_id }}_output[b][h][w][m] += 2 * {{ popcount }}(({{ uint_type }})~({{ uint_type }})(layer_{{ layer_id }}_weight[kH][kW][m][c] ^ cuda_layer_{{ layer_id - 1 }}_output[index4D(b,(h * {{ layer.strides[0] }} + kH - {{ layer.pads[0] }}),(w * {{ layer.strides[1] }} + kW - {{ layer.pads[1] }}),c,{{ layer.input_shape[2] }},{{ layer.input_shape[3] }},{{ (layer.input_shape[1] / binary_word_size)|round(method='ceil')|int }})])) - {{ binary_word_size }};
+              {% if prev_layer_is_step == true %}
+              cuda_layer_{{ layer_id }}_output[index4D(b,h,w,m,{{ layer.output_shape[2] }},{{ layer.output_shape[3] }},{{ layer.output_shape[1] }})] += 2 * {{ popcount }}(({{ uint_type }})~({{ uint_type }})(layer_{{ layer_id }}_weight[kH][kW][m][c] ^ layer_{{ layer_id - 1 }}_output[b][h * {{ layer.strides[0] }} + kH - {{ layer.pads[0] }}][w * {{ layer.strides[1] }} + kW - {{ layer.pads[1] }}][c])) - {{ binary_word_size }};
+              {% else %}
+              cuda_layer_{{ layer_id }}_output[index4D(b,h,w,m,{{ layer.output_shape[2] }},{{ layer.output_shape[3] }},{{ layer.output_shape[1] }})] += 2 * {{ popcount }}(({{ uint_type }})~({{ uint_type }})(layer_{{ layer_id }}_weight[kH][kW][m][c] ^ cuda_layer_{{ layer_id - 1 }}_output[index4D(b,(h * {{ layer.strides[0] }} + kH - {{ layer.pads[0] }}),(w * {{ layer.strides[1] }} + kW - {{ layer.pads[1] }}),c,{{ layer.input_shape[2] }},{{ layer.input_shape[3] }},{{ (layer.input_shape[1] / binary_word_size)|round(method='ceil')|int }})])) - {{ binary_word_size }};
+              {% endif %}
+            }
           }
         }
       }
@@ -21,20 +29,28 @@ for (int h = 0; h < {{ layer.output_shape[2] }}; h++) {
   }
 }
 {% else %}
-for (int h = 0; h < {{ layer.output_shape[2] }}; h++) {
-  for (int w = 0; w < {{ layer.output_shape[3] }}; w++) {
-    for (int m = 0; m < {{ layer.output_shape[1] }}; m++) {
-      layer_{{ layer_id }}_output[h][w][m] = layer_{{ layer_id }}_bias[m];
-    }
-    for (int kH = 0; kH < {{ layer.kernel_shape[2] }}; kH++) {
-      int iH = h * {{ layer.strides[0] }} + kH - {{ layer.pads[0] }};
-      if (iH >= 0 && iH < {{ layer.input_shape[2] }}) {
-        for (int kW = 0; kW < {{ layer.kernel_shape[3] }}; kW++) {
-          int iW = w * {{ layer.strides[1] }} + kW - {{ layer.pads[1] }};
-          if (iW >= 0 && iW < {{ layer.input_shape[3] }}) {
-            for (int m = 0; m < {{ layer.output_shape[1] }}; m++) {
-              for (int c = 0; c < {{ (layer.input_shape[1] / binary_word_size)|round(method='ceil')|int }}; c++) {
-                layer_{{ layer_id }}_output[h][w][m] += 2 * {{ popcount }}(({{ uint_type }})~({{ uint_type }})(layer_{{ layer_id }}_weight[kH][kW][m][c] ^ layer_{{ layer_id - 1 }}_output[iH][iW][c])) - {{ binary_word_size }};
+for(int b = 0; b < {{batch_size}}; b++){
+  for (int h = 0; h < {{ layer.output_shape[2] }}; h++) {
+    for (int w = 0; w < {{ layer.output_shape[3] }}; w++) {
+      for (int m = 0; m < {{ layer.output_shape[1] }}; m++) {
+        //layer_{{ layer_id }}_output[b][h][w][m] = layer_{{ layer_id }}_bias[m];
+        cuda_layer_{{ layer_id }}_output[index4D(b,h,w,m,{{ layer.output_shape[2] }},{{ layer.output_shape[3] }},{{ layer.output_shape[1] }})] = layer_{{ layer_id }}_bias[m];
+      }
+      for (int kH = 0; kH < {{ layer.kernel_shape[2] }}; kH++) {
+        int iH = h * {{ layer.strides[0] }} + kH - {{ layer.pads[0] }};
+        if (iH >= 0 && iH < {{ layer.input_shape[2] }}) {
+          for (int kW = 0; kW < {{ layer.kernel_shape[3] }}; kW++) {
+            int iW = w * {{ layer.strides[1] }} + kW - {{ layer.pads[1] }};
+            if (iW >= 0 && iW < {{ layer.input_shape[3] }}) {
+              for (int m = 0; m < {{ layer.output_shape[1] }}; m++) {
+                for (int c = 0; c < {{ (layer.input_shape[1] / binary_word_size)|round(method='ceil')|int }}; c++) {
+                  // layer_{{ layer_id }}_output[b][h][w][m] += 2 * {{ popcount }}(({{ uint_type }})~({{ uint_type }})(layer_{{ layer_id }}_weight[kH][kW][m][c] ^ cuda_layer_{{ layer_id - 1 }}_output[index4D(b,iH,iW,c,{{ layer.input_shape[2] }},{{ layer.input_shape[3] }},{{ (layer.input_shape[1] / binary_word_size)|round(method='ceil')|int }})])) - {{ binary_word_size }};
+                  {% if prev_layer_is_step == true %}
+                  cuda_layer_{{ layer_id }}_output[index4D(b,h,w,m,{{ layer.output_shape[2] }},{{ layer.output_shape[3] }},{{ layer.output_shape[1] }})] += 2 * {{ popcount }}(({{ uint_type }})~({{ uint_type }})(layer_{{ layer_id }}_weight[kH][kW][m][c] ^ layer_{{ layer_id - 1 }}_output[b][iH][iW][c])) - {{ binary_word_size }};
+                  {% else %}
+                  // cuda_layer_{{ layer_id }}_output[index4D(b,h,w,m,{{ layer.output_shape[2] }},{{ layer.output_shape[3] }},{{ layer.output_shape[1] }})] += 2 * {{ popcount }}(({{ uint_type }})~({{ uint_type }})(layer_{{ layer_id }}_weight[kH][kW][m][c] ^ cuda_layer_{{ layer_id - 1 }}_output[index4D(b,iH,iW,c,{{ layer.input_shape[2] }},{{ layer.input_shape[3] }},{{ (layer.input_shape[1] / binary_word_size)|round(method='ceil')|int }})])) - {{ binary_word_size }};
+                  {% endif %}
+                }
               }
             }
           }
@@ -44,3 +60,31 @@ for (int h = 0; h < {{ layer.output_shape[2] }}; h++) {
   }
 }
 {% endif %}
+
+// // checksum L{{ layer_id }} = 
+// ofstream g{{ layer_id }}("layer{{ layer_id }}/orig.out");
+// for(int b = 0; b < {{ batch_size }}; b++){
+//   sum_cpu = 0;
+//   for (int h = 0; h < {{ layer.output_shape[2] }}; h++) {// 
+//     for (int w = 0; w < {{ layer.output_shape[3] }}; w++) {
+//       for (int m = 0; m < {{ layer.output_shape[1] }}; m++) {
+//         sum_cpu += layer_{{ layer_id }}_output[b][h][w][m];
+//         g{{ layer_id }}<<layer_{{ layer_id }}_output[b][h][w][m]<<" ";  
+//       }
+//     }
+//   }
+//   cout<<fixed<<"layer {{ layer_id }}(CPU): batch "<<b<<": "<<sum_cpu<<endl;
+// }
+// cout<<endl;
+
+// // checksum L{{ layer_id }} = 
+// ofstream gg{{ layer_id }}("layer{{ layer_id }}/par.out");
+// for(int b = 0; b < {{ batch_size }}; b++){
+//   sum_gpu = 0;
+//   for(int i=b*{{ layer.output_shape[2] }}*{{ layer.output_shape[3] }}*{{ layer.output_shape[1] }};i<(b+1)*{{ layer.output_shape[2] }}*{{ layer.output_shape[3] }}*{{ layer.output_shape[1] }};i++){
+//     sum_gpu += cuda_layer_{{ layer_id }}_output[i];
+//     gg{{ layer_id }}<<cuda_layer_{{ layer_id }}_output[i]<<" ";  
+//   }
+//   cout<<fixed<<"layer {{ layer_id }}(GPU): batch "<<b<<": "<<sum_gpu<<endl;
+// }
+// cout<<endl;

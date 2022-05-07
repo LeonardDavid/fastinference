@@ -3,11 +3,54 @@
  #}
 
 // Layer {{ layer_id }}: Gemm
-for (int d = 0; d < {{ layer.output_shape[1] }}; d++) {
-  layer_{{ layer_id }}_output[d] = layer_{{ layer_id }}_bias[d];
-}
-for (int d = 0; d < {{ layer.output_shape[1] }}; d++) {
-  for (int i = 0; i < {{ (layer.input_shape[1] / binary_word_size)|round(method='ceil')|int }}; i++) {
-    layer_{{ layer_id }}_output[d] += 2 * {{ popcount }}(({{ uint_type }})~({{ uint_type }})(layer_{{ layer_id }}_weight[d][i] ^ layer_{{ layer_id - 1 }}_output[i])) - {{ binary_word_size }};
+{% if is_first_gemm_after_reshape == true %}
+for(int b = 0; b < {{batch_size}}; b++){
+  for (int d = 0; d < {{ layer.output_shape[1] }}; d++) {
+    // layer_{{ layer_id }}_output[b][d] = layer_{{ layer_id }}_bias[d];
+    cuda_layer_{{ layer_id }}_output[b*{{ layer.output_shape[1] }} + d] = layer_{{ layer_id }}_bias[d];
+  }
+  for (int d = 0; d < {{ layer.output_shape[1] }}; d++) {
+    for (int i = 0; i < {{ (layer.input_shape[1] / binary_word_size)|round(method='ceil')|int }}; i++) {
+      // layer_{{ layer_id }}_output[b][d] += 2 * {{ popcount }}(({{ uint_type }})~({{ uint_type }})(layer_{{ layer_id }}_weight[d][i] ^ cuda_layer_{{ layer_id - 1 }}_output[i])) - {{ binary_word_size }};
+      cuda_layer_{{ layer_id }}_output[b*{{ layer.output_shape[1] }} + d] += 2 * {{ popcount }}(({{ uint_type }})~({{ uint_type }})(layer_{{ layer_id }}_weight[d][i] ^ cuda_layer_{{ layer_id - 1 }}_output[b*{{ (layer.input_shape[1] / binary_word_size)|round(method='ceil')|int }} + i])) - {{ binary_word_size }};
+    }
   }
 }
+{% else %}
+for(int b = 0; b < {{batch_size}}; b++){
+  for (int d = 0; d < {{ layer.output_shape[1] }}; d++) {
+    //layer_{{ layer_id }}_output[b][d] = layer_{{ layer_id }}_bias[d];
+    cuda_layer_{{ layer_id }}_output[b*{{ layer.output_shape[1] }} + d] = layer_{{ layer_id }}_bias[d];
+  }
+  for (int d = 0; d < {{ layer.output_shape[1] }}; d++) {
+    for (int i = 0; i < {{ (layer.input_shape[1] / binary_word_size)|round(method='ceil')|int }}; i++) {
+      //layer_{{ layer_id }}_output[b][d] += 2 * {{ popcount }}(({{ uint_type }})~({{ uint_type }})(layer_{{ layer_id }}_weight[d][i] ^ cuda_layer_{{ layer_id - 1 }}_output[b*{{ (layer.input_shape[1] / binary_word_size)|round(method='ceil')|int }} + i])) - {{ binary_word_size }};
+      cuda_layer_{{ layer_id }}_output[b*{{ layer.output_shape[1] }} + d] += 2 * {{ popcount }}(({{ uint_type }})~({{ uint_type }})(layer_{{ layer_id }}_weight[d][i] ^ cuda_layer_{{ layer_id - 1 }}_output[b*{{ (layer.input_shape[1] / binary_word_size)|round(method='ceil')|int }} + i])) - {{ binary_word_size }};
+    }
+  }
+}
+{% endif %}
+
+// // checksum L{{ layer_id }}
+// ofstream gg{{ layer_id }}("layer{{ layer_id }}/par.out");
+// for(int b = 0; b < {{ batch_size }}; b++){
+//   sum_gpu = 0;
+//   for(int i=b*{{ layer.output_shape[1] }};i<(b+1)*{{ layer.output_shape[1] }};i++){
+//     sum_gpu += cuda_layer_{{ layer_id }}_output[i];
+//     gg{{ layer_id }}<<cuda_layer_{{ layer_id }}_output[i]<<" ";  
+//   }
+//   cout<<fixed<<"layer {{ layer_id }}(GPU): batch "<<b<<": "<<sum_gpu<<endl;
+// }
+// cout<<endl;
+
+// // checksum L{{ layer_id }} 
+// ofstream g{{ layer_id }}("layer{{ layer_id }}/orig.out");
+// for(int b = 0; b < {{ batch_size }}; b++){
+//   sum_cpu = 0;
+//   for (int d = 0; d < {{ layer.output_shape[1] }}; d++) {
+//     sum_cpu += layer_{{ layer_id }}_output[b][d];
+//     g{{ layer_id }}<<layer_{{ layer_id }}_output[b][d]<<" ";  
+//   }
+//   cout<<fixed<<"layer {{ layer_id }}(CPU): batch "<<b<<": "<<sum_cpu<<endl;
+// }
+// cout<<endl;

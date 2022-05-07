@@ -3,12 +3,18 @@
 #include <limits>
 #include <algorithm>
 #include <cstdint>
+#include <fstream>
+#include <iostream>
+
+#include "utils.h"
+
+using namespace std;
 
 namespace FAST_INFERENCE {
 
 static constexpr signed char layer_2_weight[3][3][1][32] = {{{{-1, -1, 1, 1, 1, 1, 1, -1, 1, -1, -1, 1, -1, 1, -1, 1, -1, -1, 1, -1, -1, 1, 1, -1, 1, -1, 1, 1, 1, 1, -1, 1}}, {{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, -1, -1, -1, -1, -1, -1, 1, -1, 1, -1, -1, 1, 1, 1, -1, 1, -1, -1}}, {{1, -1, -1, 1, -1, 1, -1, -1, -1, -1, 1, 1, -1, 1, -1, 1, -1, -1, -1, 1, 1, -1, 1, 1, -1, 1, 1, -1, 1, 1, -1, 1}}}, {{{1, -1, 1, 1, 1, -1, -1, -1, -1, 1, 1, 1, -1, 1, -1, -1, -1, 1, 1, -1, -1, 1, 1, -1, 1, 1, 1, 1, 1, -1, -1, 1}}, {{1, 1, -1, -1, -1, 1, -1, 1, -1, -1, -1, -1, 1, -1, 1, 1, 1, 1, 1, -1, 1, 1, 1, -1, 1, -1, 1, 1, -1, -1, 1, -1}}, {{1, 1, 1, 1, 1, 1, -1, -1, -1, 1, -1, 1, -1, -1, 1, -1, 1, -1, 1, 1, -1, 1, -1, -1, 1, -1, -1, -1, 1, -1, -1, 1}}}, {{{-1, -1, -1, 1, 1, 1, 1, -1, -1, -1, -1, 1, -1, 1, 1, 1, 1, 1, 1, 1, 1, -1, -1, 1, 1, 1, -1, 1, 1, 1, 1, -1}}, {{-1, 1, 1, 1, 1, -1, 1, -1, -1, -1, -1, -1, -1, -1, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, 1, 1, -1, -1, -1}}, {{1, -1, -1, -1, -1, -1, 1, -1, 1, -1, -1, 1, 1, -1, -1, 1, -1, 1, -1, 1, -1, -1, -1, 1, -1, -1, -1, 1, 1, -1, 1, 1}}}};
 static constexpr signed char layer_2_bias[32] = {1, -1, -1, -1, 1, -1, -1, -1, 1, -1, 1, -1, -1, -1, -1, 1, 1, 1, 1, -1, 1, -1, -1, -1, -1, -1, 1, -1, -1, 1, 1, 1};
-static constexpr float layer_3_threshold[32] = {29059.310546875, -7003.50244140625, 10293.27734375, 52812.37109375, 28964.15625, 40502.59765625, 11441.0576171875, -48859.75390625, -29015.49609375, -25889.603515625, -27019.650390625, 51134.96484375, -31505.66796875, 6875.66650390625, -8319.3046875, 10309.2861328125, -27011.953125, -8837.158203125, 9296.5361328125, -11538.5869140625, -13110.4912109375, -11860.4736328125, 6953.17138671875, -36007.546875, 9607.716796875, -9877.2744140625, 32374.859375, 54825.05859375, 57229.453125, -8536.587890625, -27075.287109375, 9852.080078125};
+static constexpr signed int layer_3_threshold[32] = {29060, -7003, 10294, 52813, 28965, 40503, 11442, -48859, -29015, -25889, -27019, 51135, -31505, 6876, -8319, 10310, -27011, -8837, 9297, -11538, -13110, -11860, 6954, -36007, 9608, -9877, 32375, 54826, 57230, -8536, -27075, 9853};
 static constexpr unsigned int layer_5_weight[3][3][32][1] = {{{{0x25ec13c0}, {0x9f91823a}, {0x91398e46}, {0x15ecb966}, {0x7e5ab21f}, {0xa06a8442}, {0x741fa9ee}, {0xefee913b}, {0x23e900d0}, {0xf935689d}, {0x714a76ec}, {0xc4cb137b}, {0x21c40909}, {0x33e617fe}, {0x11e23c98}, {0x79615cf2}, {0x79ca8bf8}, {0x18919605}, {0xfefceef7}, {0xcda6e316}, {0xd5c38620}, {0x410c0672}, {0xa357a38}, {0x81ada828}, {0x5c2a613b}, {0xbe7bc46}, {0xd1eac863}, {0x20ada073}, {0xb89d0e0d}, {0xe5203f60}, {0x64e4eee5}, {0xc9ec8760}}, {{0x40a8f4a7}, {0x903226a0}, {0x3de4256f}, {0x3ffcb772}, {0xd5bbbdda}, {0x87132c2a}, {0xd41f305e}, {0x37fe9ff6}, {0xabfd64d7}, {0x7935befe}, {0x79e6dd57}, {0xab06fe5f}, {0xaa1b4cb9}, {0x305a9903}, {0x51c647e6}, {0x4a63dbdb}, {0xc3f6dcab}, {0xf8052150}, {0x4ff6b9da}, {0xbcca99de}, {0x973fd93}, {0xf715844f}, {0x25d5cc56}, {0x7c6259a8}, {0xa7b3c84f}, {0xe5a991bf}, {0xa73bcab1}, {0x272d0e1f}, {0x23c46205}, {0x6d04858a}, {0xc1ea110f}, {0xad64eac7}}, {{0x1e1de23b}, {0xbf15e089}, {0x156d86f5}, {0x8bfea1d6}, {0xdfd1b3ae}, {0xb885eeb9}, {0x396e4654}, {0x99f4efd5}, {0x3baaf182}, {0xbfcadce6}, {0x3deab746}, {0xc9b377b0}, {0xea952823}, {0xe8f94230}, {0x1cfdd46}, {0xcb98d897}, {0xda02109a}, {0x10103439}, {0x4aead51c}, {0xd8436072}, {0xff93d1bb}, {0xd7372ab9}, {0xe3ca15c7}, {0x42efe4cf}, {0x93f1ef6b}, {0x60e692d2}, {0xbed642bb}, {0xdbb5e4bf}, {0x4b0a8d02}, {0x44c97b9f}, {0x86085a22}, {0xaba4afd4}}}, {{{0x1fc230f}, {0x296c0f93}, {0xc3df8196}, {0x93c2f5c2}, {0xc5a4a461}, {0x11ce8942}, {0x39770ebc}, {0x67eb6d5f}, {0x9aebf142}, {0xef102ad4}, {0x6a1877db}, {0xec5f6e71}, {0x59dc1d66}, {0xeffa576d}, {0x3b8b63d3}, {0xbc3100b6}, {0xa9e18e54}, {0xbfb306d2}, {0x2ef576eb}, {0xd064e4d3}, {0x7f2457ce}, {0x11f9a540}, {0xb60c6a5d}, {0x94943aaa}, {0xebef0841}, {0x5fedf498}, {0x53f83943}, {0xfb64b681}, {0x13b4cd16}, {0xbdcfbf4}, {0x2fa367b5}, {0x432ae1d2}}, {{0x81ac96e9}, {0x50e10ec0}, {0x1befe132}, {0xac2c1ca}, {0xa5efe4e6}, {0x557d3dce}, {0x1d716e7e}, {0xafede7f7}, {0xa73fd192}, {0x364c667c}, {0x39a3d5fb}, {0xafe4e4f3}, {0x83e6b716}, {0xc04a9842}, {0x92d8bb8d}, {0x6208c4d1}, {0xd3e8a49b}, {0x287006ec}, {0xeec333e7}, {0xbdf4fadf}, {0xcbbcc4ff}, {0x43f3084d}, {0x72f1cc85}, {0x444e120b}, {0xa3fdcce1}, {0x8e3efb72}, {0x3d5ddef7}, {0xcf25d693}, {0x4a6b4d4e}, {0xd89b7174}, {0x1cb1901}, {0x33c695c2}}, {{0x18d3433f}, {0x3f350e40}, {0x5fcff104}, {0x4b1ed18a}, {0x14bca6d4}, {0x216c85a6}, {0xd8b544d2}, {0xcbeef1d6}, {0x4bc2f012}, {0xfedf76b7}, {0x4333739c}, {0xefd7eeb9}, {0xd1bf4f6a}, {0xa8800a4d}, {0xb259d22b}, {0xcd3090d3}, {0xcf65a6fe}, {0xde20a4bb}, {0xeaeaf6f5}, {0xfe74e2b1}, {0xfe66aae7}, {0x8f994ad8}, {0x5fb5005}, {0x14ae35d8}, {0xc3f0c78f}, {0x9f56e4b5}, {0xc16f78b8}, {0xbc65aeb3}, {0x791106}, {0x96fa497d}, {0x160b588d}, {0xbc6fd4a}}}, {{{0xd208ff0a}, {0xc3fbdc16}, {0x8352b21a}, {0x1f776094}, {0x4bfb9d52}, {0x1506509e}, {0x8c186e6f}, {0xebeabbde}, {0x439a4440}, {0x5686d4b}, {0x3c5fe2b8}, {0x53ee1ce6}, {0xd201f998}, {0x618a9b07}, {0xcc1373d9}, {0xdc906e99}, {0xe367c53d}, {0x3e89c05}, {0xf6d2e8dd}, {0x68e9b6e6}, {0x3b6c9f52}, {0xe36e9567}, {0x3e042ed4}, {0xdc142e9d}, {0x928b6192}, {0x9fd9b780}, {0x413a1f24}, {0x296786c5}, {0x9a5722e2}, {0xb5137637}, {0x47ee8507}, {0x6cc1f834}}, {{0x8bd9e477}, {0xdd82558}, {0xa3f234ba}, {0xba65c13d}, {0x3bbfa576}, {0x4f26758e}, {0x1238462d}, {0x4ea3f1db}, {0xa20280b7}, {0xbd9f3f47}, {0x3a16772c}, {0xb9d440f}, {0x1a9b642}, {0xc2932c13}, {0x8e16f28d}, {0x9c40bab9}, {0xbe50b1bb}, {0x45ed1f4d}, {0x65c2cffd}, {0xe7e7afe6}, {0x4aa3499f}, {0x63db1d06}, {0x55d856f}, {0xb5286f6c}, {0x2bfadaa3}, {0x78f69eed}, {0x776d8f79}, {0x31e4bd67}, {0x17b939b}, {0x828a4919}, {0x448a3b21}, {0xfc7329a3}}, {{0xfe13e9bb}, {0x1481d07}, {0x4928e0d2}, {0xb5c74949}, {0x8dffbd12}, {0x13d8d12}, {0x39df932d}, {0x5babb4d8}, {0xba456184}, {0x896e96e6}, {0x3e546698}, {0xa2d63027}, {0x554391a3}, {0xf638a9b9}, {0xfa534091}, {0xf4e59ecd}, {0x8f75a6d2}, {0x65a89f45}, {0xbdd0eafd}, {0xd3fcabf7}, {0xba316d10}, {0x822a8f6d}, {0x415e4904}, {0x5504f66f}, {0x8eaef18a}, {0x9ef8e56d}, {0xd2a05b39}, {0xe5ed8dd6}, {0x5653701a}, {0xfc5ee2a9}, {0xd57175eb}, {0x67bf4d0e}}}};
 static constexpr signed char layer_5_bias[32] = {-1, -1, -1, 1, 1, -1, 1, 1, 1, 1, -1, -1, 1, 1, -1, -1, -1, -1, -1, -1, -1, -1, 1, 1, -1, -1, -1, 1, -1, -1, 1, 1};
 static constexpr signed char layer_6_threshold[32] = {-2, -8, 11, 16, 26, 4, -4, 45, 3, 12, 5, 8, 4, 7, -4, -6, 0, -9, 22, 14, 11, 10, 6, -6, 17, 12, 10, -1, -5, 0, 13, 23};
@@ -18,99 +24,135 @@ static constexpr signed char layer_10_threshold[32] = {-20, -36, 23, -49, 48, 28
 static constexpr unsigned int layer_11_weight[10][1] = {{0xc2c480ce}, {0xbb26f3d9}, {0x42def652}, {0x137bf5f6}, {0x69736aca}, {0x23ffcd34}, {0xa297f213}, {0xeeb3d657}, {0xb6c238b2}, {0x8e71fc9a}};
 static constexpr signed char layer_11_bias[10] = {-1, 1, 1, 1, 1, -1, 1, 1, -1, -1};
 
-static double cuda_layer_2_output[1*26*26*32];
-static double layer_2_output[26][26][32];
+static int cuda_layer_2_output[1*26*26*32];
+static int layer_2_output[1][26][26][32];
 
 static unsigned int cuda_layer_3_output[1*26*26*1*32];
-static unsigned int layer_3_output[26][26][1];
+static unsigned int layer_3_output[1][26][26][1];
 
 static unsigned int cuda_layer_4_output[1*13*13*1*32];
-static unsigned int layer_4_output[13][13][1];
+static unsigned int layer_4_output[1][13][13][1];
 
 static signed int cuda_layer_5_output[1*11*11*32];
-static signed int layer_5_output[11][11][32];
+static signed int layer_5_output[1][11][11][32];
 
 static unsigned int cuda_layer_6_output[1*11*11*1*32];
-static unsigned int layer_6_output[11][11][1];
+static unsigned int layer_6_output[1][11][11][1];
 
 static unsigned int cuda_layer_7_output[1*5*5*1*32];
-static unsigned int layer_7_output[5][5][1];
+static unsigned int layer_7_output[1][5][5][1];
 
 static signed int cuda_layer_9_output[1*32];
-static signed int layer_9_output[32];
+static signed int layer_9_output[1][32];
 
 static unsigned int cuda_layer_10_output[1*1*32];
-static unsigned int layer_10_output[1];
+static unsigned int layer_10_output[1][1];
 
 static signed int cuda_layer_11_output[1*10];
-static signed int layer_11_output[10];
+static signed int layer_11_output[1][10];
 
 
 
-void predict_cudatest(double const * const x, double * pred) {
+void predict_cudatest(int const * const x, int * pred) {
     auto layer_0_output = x;
+    double sum_cpu = 0, sum_gpu = 0;
+
 	
     // Layer 1: Reshape
-    auto layer_1_output = (double (*)[28][1]) layer_0_output;
+    auto layer_1_output = (int (*)[28][1]) layer_0_output;
 
     // Layer 2: Conv
-    for (int h = 0; h < 26; h++) {
-      for (int w = 0; w < 26; w++) {
-        for (int m = 0; m < 32; m++) {
-          layer_2_output[h][w][m] = layer_2_bias[m];
-        }
-        for (int kH = 0; kH < 3; kH++) {
-          for (int kW = 0; kW < 3; kW++) {
-            for (int c = 0; c < 1; c++) {
-              for (int m = 0; m < 32; m++) {
-                layer_2_output[h][w][m] += layer_2_weight[kH][kW][c][m] * layer_1_output[h * 1 + kH - 0][w * 1 + kW - 0][c];
-              }
-            }
-          }
-        }
-      }
+    for(int b = 0; b < 1; b++){
+    	for (int h = 0; h < 26; h++) {
+    		for (int w = 0; w < 26; w++) {
+    			for (int m = 0; m < 32; m++) {
+    				//layer_2_output[b][h][w][m] = layer_2_bias[m];
+     				cuda_layer_2_output[index4D(b,h,w,m,26,26,32)] = layer_2_bias[m];
+    			}
+    			for (int kH = 0; kH < 3; kH++) {
+    				for (int kW = 0; kW < 3; kW++) {
+    					for (int c = 0; c < 1; c++) {
+    						for (int m = 0; m < 32; m++) {
+                  // not sure if [b] needed in layer_1_output[?][h * 1 + kH - 0][w * 1 + kW - 0][c];
+    							//layer_2_output[b][h][w][m] += layer_2_weight[kH][kW][c][m] * layer_1_output[h * 1 + kH - 0][w * 1 + kW - 0][c];
+    							cuda_layer_2_output[index4D(b,h,w,m,26,26,32)] += layer_2_weight[kH][kW][c][m] * layer_1_output[h * 1 + kH - 0][w * 1 + kW - 0][c];
+    						}
+    					}
+    				}
+    			}
+    		}
+    	}
     }
+
+    // // checksum L2 = 
+    // ofstream g2("layer2/orig.out");
+    // for(int b = 0; b < 1; b++){
+    //   sum_cpu = 0;
+    //   for (int h = 0; h < 26; h++) {// 
+    //     for (int w = 0; w < 26; w++) {
+    //       for (int m = 0; m < 32; m++) {
+    //         sum_cpu += layer_2_output[b][h][w][m];
+    //         g2<<layer_2_output[b][h][w][m]<<" ";  
+    //       }
+    //     }
+    //   }
+    //   cout<<fixed<<"layer 2(CPU): batch "<<b<<": "<<sum_cpu<<endl;
+    // }
+    // cout<<endl;
+
+    // // checksum L2 = 
+    // ofstream gg2("layer2/par.out");
+    // for(int b = 0; b < 1; b++){
+    //   sum_gpu = 0;
+    //   for(int i=b*26*26*32;i<(b+1)*26*26*32;i++){
+    //     sum_gpu += cuda_layer_2_output[i];
+    //     gg2<<cuda_layer_2_output[i]<<" ";  
+    //   }
+    //   cout<<fixed<<"layer 2(GPU): batch "<<b<<": "<<sum_gpu<<endl;
+    // }
+    // cout<<endl;
 
     // Layer 3: Step
-    for (int h = 0; h < 26; h++) {
-      for (int w = 0; w < 26; w++) {
-        for (int c = 0; c < 32; c++) {
-          if (layer_2_output[h][w][c] >= layer_3_threshold[c]) {
-            layer_3_output[h][w][c / 32] |= (1U << (31 - c % 32));
-          } else {
-            layer_3_output[h][w][c / 32] &= ~(1U << (31 - c % 32));
-          }
-        }
-      }
-    }
-
-    // Layer 4: MaxPool
-    for (int h = 0; h < 13; h++) {
-      for (int w = 0; w < 13; w++) {
-        for (int c = 0; c < 1; c++) {
-          layer_4_output[h][w][c] = 0;
-        }
-        for (int kH = 0; kH < 2; kH++) {
-          for (int kW = 0; kW < 2; kW++) {
-            for (int c = 0; c < 1; c++) {
-              layer_4_output[h][w][c] |= layer_3_output[h * 2 + kH][w * 2 + kW][c];
+    for(int b = 0; b < 1; b++){
+      for (int h = 0; h < 26; h++) {
+        for (int w = 0; w < 26; w++) {
+          for (int c = 0; c < 32; c++) {
+            // if (layer_2_output[b][h][w][c] >= layer_3_threshold[c]) {
+            if (cuda_layer_2_output[index4D(b,h,w,c,26,26,32)] >= layer_3_threshold[c]) {  
+              layer_3_output[b][h][w][c / 32] |= (1U << (31 - c % 32));
+            } else {
+              layer_3_output[b][h][w][c / 32] &= ~(1U << (31 - c % 32));
             }
           }
         }
       }
     }
 
-    // Layer 5: Conv
-    for (int h = 0; h < 11; h++) {
-      for (int w = 0; w < 11; w++) {
-        for (int m = 0; m < 32; m++) {
-          layer_5_output[h][w][m] = layer_5_bias[m];
-        }
-        for (int kH = 0; kH < 3; kH++) {
-          for (int kW = 0; kW < 3; kW++) {
-            for (int m = 0; m < 32; m++) {
+    // // might be needed, but subsequent layers work with normal layer_x_output from step
+    // for(int b = 0; b < 1; b++){
+    //   for (int h = 0; h < 26; h++) {
+    //     for (int w = 0; w < 26; w++) {
+    //       for (int c = 0; c < 32; c++) {
+    //         cuda_layer_3_output[index4D(b,h,w,c,26,26,32)] = layer_3_output[b][h][w][c];
+    //       }
+    //     }
+    //   }
+    // }
+
+    // 
+    // Layer 4: MaxPool
+    for(int b = 0; b < 1; b++){
+      for (int h = 0; h < 13; h++) {
+        for (int w = 0; w < 13; w++) {
+          for (int c = 0; c < 1; c++) {
+            //layer_4_output[b][h][w][c] = 0;
+            cuda_layer_4_output[index4D(b,h,w,c,13,13,1)] = 0;
+          }
+          for (int kH = 0; kH < 2; kH++) {
+            for (int kW = 0; kW < 2; kW++) {
               for (int c = 0; c < 1; c++) {
-                layer_5_output[h][w][m] += 2 * __builtin_popcount((unsigned int)~(unsigned int)(layer_5_weight[kH][kW][m][c] ^ layer_4_output[h * 1 + kH - 0][w * 1 + kW - 0][c])) - 32;
+                //layer_4_output[b][h][w][c] |= layer_3_output[b][h * 2 + kH][w * 2 + kW][c];
+                cuda_layer_4_output[index4D(b,h,w,c,13,13,1)] |= layer_3_output[b][h * 2 + kH][w * 2 + kW][c];
               }
             }
           }
@@ -118,70 +160,258 @@ void predict_cudatest(double const * const x, double * pred) {
       }
     }
 
-    // Layer 6: Step
-    for (int h = 0; h < 11; h++) {
-      for (int w = 0; w < 11; w++) {
-        for (int c = 0; c < 32; c++) {
-          if (layer_5_output[h][w][c] >= layer_6_threshold[c]) {
-            layer_6_output[h][w][c / 32] |= (1U << (31 - c % 32));
-          } else {
-            layer_6_output[h][w][c / 32] &= ~(1U << (31 - c % 32));
-          }
-        }
-      }
-    }
+    // // checksum L4 = 
+    // ofstream g4("layer4/orig.out");
+    // for(int b = 0; b < 1; b++){
+    //   sum_cpu = 0;
+    //   for (int h = 0; h < 13; h++) {// 
+    //     for (int w = 0; w < 13; w++) {
+    //       for (int c = 0; c < 1; c++) {
+    //         sum_cpu += layer_4_output[b][h][w][c];
+    //         g4<<layer_4_output[b][h][w][c]<<" ";  
+    //       }
+    //     }
+    //   }
+    //   cout<<fixed<<"layer 4(CPU): batch "<<b<<": "<<sum_cpu<<endl;
+    // }
+    // cout<<endl;
 
-    // Layer 7: MaxPool
-    for (int h = 0; h < 5; h++) {
-      for (int w = 0; w < 5; w++) {
-        for (int c = 0; c < 1; c++) {
-          layer_7_output[h][w][c] = 0;
-        }
-        for (int kH = 0; kH < 2; kH++) {
-          for (int kW = 0; kW < 2; kW++) {
-            for (int c = 0; c < 1; c++) {
-              layer_7_output[h][w][c] |= layer_6_output[h * 2 + kH][w * 2 + kW][c];
+    // // checksum L4 = 
+    // ofstream gg4("layer4/par.out");
+    // for(int b = 0; b < 1; b++){
+    //   sum_gpu = 0;
+    //   for(int i=b*13*13*32;i<(b+1)*13*13*32;i++){
+    //     sum_gpu += cuda_layer_4_output[i];
+    //     gg4<<cuda_layer_4_output[i]<<" ";  
+    //   }
+    //   cout<<fixed<<"layer 4(GPU): batch "<<b<<": "<<sum_gpu<<endl;
+    // }
+    // cout<<endl;
+
+    // Layer 5: Conv
+    for(int b = 0; b < 1; b++){
+      for (int h = 0; h < 11; h++) {
+        for (int w = 0; w < 11; w++) {
+          for (int m = 0; m < 32; m++) {
+            //layer_5_output[b][h][w][m] = layer_5_bias[m];
+            cuda_layer_5_output[index4D(b,h,w,m,11,11,32)] = layer_5_bias[m];
+          }
+          for (int kH = 0; kH < 3; kH++) {
+            for (int kW = 0; kW < 3; kW++) {
+              for (int m = 0; m < 32; m++) {
+                for (int c = 0; c < 1; c++) {
+                  //layer_5_output[b][h][w][m] += 2 * __builtin_popcount((unsigned int)~(unsigned int)(layer_5_weight[kH][kW][m][c] ^ cuda_layer_4_output[index4D(b,(h * 1 + kH - 0),(w * 1 + kW - 0),c,13,13,1)])) - 32;
+                  cuda_layer_5_output[index4D(b,h,w,m,11,11,32)] += 2 * __builtin_popcount((unsigned int)~(unsigned int)(layer_5_weight[kH][kW][m][c] ^ cuda_layer_4_output[index4D(b,(h * 1 + kH - 0),(w * 1 + kW - 0),c,13,13,1)])) - 32;
+                }
+              }
             }
           }
         }
       }
     }
 
+    // // checksum L5 = 
+    // ofstream g5("layer5/orig.out");
+    // for(int b = 0; b < 1; b++){
+    //   sum_cpu = 0;
+    //   for (int h = 0; h < 11; h++) {// 
+    //     for (int w = 0; w < 11; w++) {
+    //       for (int m = 0; m < 32; m++) {
+    //         sum_cpu += layer_5_output[b][h][w][m];
+    //         g5<<layer_5_output[b][h][w][m]<<" ";  
+    //       }
+    //     }
+    //   }
+    //   cout<<fixed<<"layer 5(CPU): batch "<<b<<": "<<sum_cpu<<endl;
+    // }
+    // cout<<endl;
+
+    // // checksum L5 = 
+    // ofstream gg5("layer5/par.out");
+    // for(int b = 0; b < 1; b++){
+    //   sum_gpu = 0;
+    //   for(int i=b*11*11*32;i<(b+1)*11*11*32;i++){
+    //     sum_gpu += cuda_layer_5_output[i];
+    //     gg5<<cuda_layer_5_output[i]<<" ";  
+    //   }
+    //   cout<<fixed<<"layer 5(GPU): batch "<<b<<": "<<sum_gpu<<endl;
+    // }
+    // cout<<endl;
+
+    // Layer 6: Step
+    for(int b = 0; b < 1; b++){
+      for (int h = 0; h < 11; h++) {
+        for (int w = 0; w < 11; w++) {
+          for (int c = 0; c < 32; c++) {
+            // if (layer_5_output[b][h][w][c] >= layer_6_threshold[c]) {
+            if (cuda_layer_5_output[index4D(b,h,w,c,11,11,32)] >= layer_6_threshold[c]) {  
+              layer_6_output[b][h][w][c / 32] |= (1U << (31 - c % 32));
+            } else {
+              layer_6_output[b][h][w][c / 32] &= ~(1U << (31 - c % 32));
+            }
+          }
+        }
+      }
+    }
+
+    // // might be needed, but subsequent layers work with normal layer_x_output from step
+    // for(int b = 0; b < 1; b++){
+    //   for (int h = 0; h < 11; h++) {
+    //     for (int w = 0; w < 11; w++) {
+    //       for (int c = 0; c < 32; c++) {
+    //         cuda_layer_6_output[index4D(b,h,w,c,11,11,32)] = layer_6_output[b][h][w][c];
+    //       }
+    //     }
+    //   }
+    // }
+
+    // 
+    // Layer 7: MaxPool
+    for(int b = 0; b < 1; b++){
+      for (int h = 0; h < 5; h++) {
+        for (int w = 0; w < 5; w++) {
+          for (int c = 0; c < 1; c++) {
+            //layer_7_output[b][h][w][c] = 0;
+            cuda_layer_7_output[index4D(b,h,w,c,5,5,1)] = 0;
+          }
+          for (int kH = 0; kH < 2; kH++) {
+            for (int kW = 0; kW < 2; kW++) {
+              for (int c = 0; c < 1; c++) {
+                //layer_7_output[b][h][w][c] |= layer_6_output[b][h * 2 + kH][w * 2 + kW][c];
+                cuda_layer_7_output[index4D(b,h,w,c,5,5,1)] |= layer_6_output[b][h * 2 + kH][w * 2 + kW][c];
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // // checksum L7 = 
+    // ofstream g7("layer7/orig.out");
+    // for(int b = 0; b < 1; b++){
+    //   sum_cpu = 0;
+    //   for (int h = 0; h < 5; h++) {// 
+    //     for (int w = 0; w < 5; w++) {
+    //       for (int c = 0; c < 1; c++) {
+    //         sum_cpu += layer_7_output[b][h][w][c];
+    //         g7<<layer_7_output[b][h][w][c]<<" ";  
+    //       }
+    //     }
+    //   }
+    //   cout<<fixed<<"layer 7(CPU): batch "<<b<<": "<<sum_cpu<<endl;
+    // }
+    // cout<<endl;
+
+    // // checksum L7 = 
+    // ofstream gg7("layer7/par.out");
+    // for(int b = 0; b < 1; b++){
+    //   sum_gpu = 0;
+    //   for(int i=b*5*5*32;i<(b+1)*5*5*32;i++){
+    //     sum_gpu += cuda_layer_7_output[i];
+    //     gg7<<cuda_layer_7_output[i]<<" ";  
+    //   }
+    //   cout<<fixed<<"layer 7(GPU): batch "<<b<<": "<<sum_gpu<<endl;
+    // }
+    // cout<<endl;
+
     // Layer 8: Reshape
-    auto layer_8_output = (unsigned int (*)) layer_7_output;
+    // auto layer_8_output = (unsigned int (*)) layer_7_output;
+    auto cuda_layer_8_output = (unsigned int (*)) cuda_layer_7_output;
 
     // Layer 9: Gemm
-    for (int d = 0; d < 32; d++) {
-      layer_9_output[d] = layer_9_bias[d];
-    }
-    for (int d = 0; d < 32; d++) {
-      for (int i = 0; i < 25; i++) {
-        layer_9_output[d] += 2 * __builtin_popcount((unsigned int)~(unsigned int)(layer_9_weight[d][i] ^ layer_8_output[i])) - 32;
+    for(int b = 0; b < 1; b++){
+      for (int d = 0; d < 32; d++) {
+        // layer_9_output[b][d] = layer_9_bias[d];
+        cuda_layer_9_output[b*32 + d] = layer_9_bias[d];
+      }
+      for (int d = 0; d < 32; d++) {
+        for (int i = 0; i < 25; i++) {
+          // layer_9_output[b][d] += 2 * __builtin_popcount((unsigned int)~(unsigned int)(layer_9_weight[d][i] ^ cuda_layer_8_output[i])) - 32;
+          cuda_layer_9_output[b*32 + d] += 2 * __builtin_popcount((unsigned int)~(unsigned int)(layer_9_weight[d][i] ^ cuda_layer_8_output[b*25 + i])) - 32;
+        }
       }
     }
+
+    // // checksum L9
+    // ofstream gg9("layer9/par.out");
+    // for(int b = 0; b < 1; b++){
+    //   sum_gpu = 0;
+    //   for(int i=b*32;i<(b+1)*32;i++){
+    //     sum_gpu += cuda_layer_9_output[i];
+    //     gg9<<cuda_layer_9_output[i]<<" ";  
+    //   }
+    //   cout<<fixed<<"layer 9(GPU): batch "<<b<<": "<<sum_gpu<<endl;
+    // }
+    // cout<<endl;
+
+    // // checksum L9 
+    // ofstream g9("layer9/orig.out");
+    // for(int b = 0; b < 1; b++){
+    //   sum_cpu = 0;
+    //   for (int d = 0; d < 32; d++) {
+    //     sum_cpu += layer_9_output[b][d];
+    //     g9<<layer_9_output[b][d]<<" ";  
+    //   }
+    //   cout<<fixed<<"layer 9(CPU): batch "<<b<<": "<<sum_cpu<<endl;
+    // }
+    // cout<<endl;
 
     // Layer 10: Step
-    for (int d = 0; d < 32; d++) {
-      if (layer_9_output[d] >= layer_10_threshold[d]) {
-        layer_10_output[d / 32] |= (1U << (31 - d % 32));
-      } else {
-        layer_10_output[d / 32] &= ~(1U << (31 - d % 32));
+    for(int b = 0; b < 1; b++){
+      for (int d = 0; d < 32; d++) {
+        if (cuda_layer_9_output[b*32 + d] >= layer_10_threshold[d]) {
+          layer_10_output[b][d / 32] |= (1U << (31 - d % 32));
+        } else {
+          layer_10_output[b][d / 32] &= ~(1U << (31 - d % 32));
+        }
       }
     }
+
+    signed int *cuda_layer_10_output = (signed int *) layer_10_output;
 
     // Layer 11: Gemm
-    for (int d = 0; d < 10; d++) {
-      layer_11_output[d] = layer_11_bias[d];
-    }
-    for (int d = 0; d < 10; d++) {
-      for (int i = 0; i < 1; i++) {
-        layer_11_output[d] += 2 * __builtin_popcount((unsigned int)~(unsigned int)(layer_11_weight[d][i] ^ layer_10_output[i])) - 32;
+    for(int b = 0; b < 1; b++){
+      for (int d = 0; d < 10; d++) {
+        //layer_11_output[b][d] = layer_11_bias[d];
+        cuda_layer_11_output[b*10 + d] = layer_11_bias[d];
+      }
+      for (int d = 0; d < 10; d++) {
+        for (int i = 0; i < 1; i++) {
+          //layer_11_output[b][d] += 2 * __builtin_popcount((unsigned int)~(unsigned int)(layer_11_weight[d][i] ^ cuda_layer_10_output[b*1 + i])) - 32;
+          cuda_layer_11_output[b*10 + d] += 2 * __builtin_popcount((unsigned int)~(unsigned int)(layer_11_weight[d][i] ^ cuda_layer_10_output[b*1 + i])) - 32;
+        }
       }
     }
 
+    // // checksum L11
+    // ofstream gg11("layer11/par.out");
+    // for(int b = 0; b < 1; b++){
+    //   sum_gpu = 0;
+    //   for(int i=b*10;i<(b+1)*10;i++){
+    //     sum_gpu += cuda_layer_11_output[i];
+    //     gg11<<cuda_layer_11_output[i]<<" ";  
+    //   }
+    //   cout<<fixed<<"layer 11(GPU): batch "<<b<<": "<<sum_gpu<<endl;
+    // }
+    // cout<<endl;
 
-    for (int i = 0; i < 10; i++) {
-        pred[i] += layer_11_output[i];
+    // // checksum L11 
+    // ofstream g11("layer11/orig.out");
+    // for(int b = 0; b < 1; b++){
+    //   sum_cpu = 0;
+    //   for (int d = 0; d < 10; d++) {
+    //     sum_cpu += layer_11_output[b][d];
+    //     g11<<layer_11_output[b][d]<<" ";  
+    //   }
+    //   cout<<fixed<<"layer 11(CPU): batch "<<b<<": "<<sum_cpu<<endl;
+    // }
+    // cout<<endl;
+
+
+    for(int b = 0; b < 1; b++){
+      for (int i = 0; i < 10; i++) {
+        pred[i] += cuda_layer_11_output[b*10 + i];
+      }
     }
 }
 

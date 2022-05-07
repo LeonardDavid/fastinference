@@ -1,0 +1,1 @@
+/usr/bin/c++  -Wall -Wno-long-long -pedantic -Wno-unused-variable -Ofast -march=native -mtune=native -rdynamic CMakeFiles/testCode.dir/main.cpp.o CMakeFiles/testCode.dir/model.cpp.o -o testCode 

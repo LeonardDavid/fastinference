@@ -66,11 +66,14 @@ auto benchmark(std::vector<std::vector<FEATURE_TYPE>> &X, std::vector<unsigned i
     unsigned int n_features = X[0].size();
 
 	unsigned int matches = 0;
+	size_t xsize = X.size();
+	// size_t xsize = 2; // for testing;
     auto start = std::chrono::high_resolution_clock::now();
     for (unsigned int k = 0; k < repeat; ++k) {
     	matches = 0;
-	    for (unsigned int i = 0; i < X.size(); ++i) {
+	    for (unsigned int i = 0; i < xsize; ++i) {
 	        std::fill(output, output+N_CLASSES, 0);
+			// TODO make label as array for multiple batches
 	        unsigned int label = Y[i];
 
 	        // Note: To make this code more universially applicable we define predict to be the correct function
@@ -83,18 +86,21 @@ auto benchmark(std::vector<std::vector<FEATURE_TYPE>> &X, std::vector<unsigned i
 			FEATURE_TYPE const * const x = &X[i][0];
 			predict(x, output);
 
+			// TODO adapt for multiple batches in the matches code:
 			if constexpr (N_CLASSES >= 2) {
-				LABEL_TYPE max = output[0];
-				unsigned int argmax = 0;
-				for (unsigned int j = 1; j < N_CLASSES; j++) {
-					if (output[j] > max) {
-						max = output[j];
-						argmax = j;
+				for(int b = 0; b < 1; b++){
+					LABEL_TYPE max = output[b*N_CLASSES];
+					unsigned int argmax = 0;
+					for (unsigned int j = 1; j < N_CLASSES; j++) {
+						if (output[b*N_CLASSES + j] > max) {
+							max = output[b*N_CLASSES + j];
+							argmax = j;
+						}
 					}
-				}
-
-				if (argmax == label) {
-					++matches;
+					if (argmax == label) {
+						// std::cout<<"image: "<<i<<" | "<<"label: "<<label<<", argmax: "<<argmax<<std::endl;
+						++matches;
+					}
 				}
 			} else {
 				if ( (output[0] < 0 && label == 0) || (output[0] >= 0 && label == 1) ) {

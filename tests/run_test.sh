@@ -67,6 +67,10 @@ case $i in
     GENERATE_DATA="${i#*=}"
     shift # past argument=value
     ;;
+    --batch_size=*)
+    BATCH_SIZE="${i#*=}"
+    shift # past argument=value
+    ;;
     *)
     # unknown option
     ;;
@@ -116,7 +120,7 @@ else
     FEATURE_TYPE="double"
 fi
 
-python3 fastinference/main.py --model $OUTPATH/$MODELNAME.$ENDING --feature_type $FEATURE_TYPE --out_path $OUTPATH --out_name "model" $FIOPTIONS 
+python3 fastinference/main.py --model $OUTPATH/$MODELNAME.$ENDING --feature_type $FEATURE_TYPE --out_path $OUTPATH --out_name "model" $FIOPTIONS --batch_size $BATCH_SIZE
 python3 ./tests/data/convert_data.py --file $OUTPATH/testing.csv --out $OUTPATH/testing.h --dtype $FEATURE_TYPE --ltype "unsigned int"
 
 cp ./tests/main.cpp $OUTPATH

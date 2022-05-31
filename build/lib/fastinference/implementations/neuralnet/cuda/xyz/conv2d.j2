@@ -3,6 +3,7 @@
  #}
 
 // Layer {{ layer_id }}: Conv
+start = std::chrono::high_resolution_clock::now();
 {% if layer.pads == [0, 0, 0, 0] %}
 for(int b = 0; b < {{batch_size}}; b++){
   for (int h = 0; h < {{ layer.output_shape[2] }}; h++) {
@@ -60,6 +61,9 @@ for(int b = 0; b < {{batch_size}}; b++){
   }
 }
 {% endif %}
+end = std::chrono::high_resolution_clock::now();
+auto l{{ layer_id }}_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());  
+float l{{ layer_id }}_kernel_time = 0;
 
 // // checksum L{{ layer_id }} = 
 // ofstream g{{ layer_id }}("layer{{ layer_id }}/orig.out");
@@ -76,6 +80,14 @@ for(int b = 0; b < {{batch_size}}; b++){
 //   cout<<fixed<<"layer {{ layer_id }}(CPU): batch "<<b<<": "<<sum_cpu<<endl;
 // }
 // cout<<endl;
+
+/* Layer {{ layer_id }} GPU */ 
+// start = std::chrono::high_resolution_clock::now();
+// kernel_time += layer{{ layer_id }}_gpu(cuda_layer_{{ layer_id-1 }}_output, cuda_layer_{{ layer_id }}_output);
+// end = std::chrono::high_resolution_clock::now();  
+// auto l{{ layer_id }}_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());
+// TODO for loop at the end? float l{{ layer_id }}_kernel_time = kernel_time-l1_kernel_time-...;
+// l{{ layer_id }}_time -= l{{ layer_id }}_kernel_time*1000000.0f; // ms->ns
 
 // // checksum L{{ layer_id }} = 
 // ofstream gg{{ layer_id }}("layer{{ layer_id }}/par.out");

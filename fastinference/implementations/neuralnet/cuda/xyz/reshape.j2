@@ -9,3 +9,7 @@ auto layer_{{ layer_id }}_output = ({{ input_type }} (*)[{{ layer.output_shape[2
 // auto layer_{{ layer_id }}_output = ({{ input_type }} (*)) layer_{{ layer_id - 1 }}_output;
 auto cuda_layer_{{ layer_id }}_output = ({{ input_type }} (*)) cuda_layer_{{ layer_id - 1 }}_output;
 {% endif %}
+
+// variables for compatibility
+float l{{ layer_id }}_time = 0;
+float l{{ layer_id }}_kernel_time = 0;

@@ -153,14 +153,14 @@ int main (int argc, char *argv[]) {
 	assert(std::get<0>(data).size() == std::get<1>(data).size());
 	assert(std::get<0>(data)[0].size() == N_FEATURES);
 
-    std::cout << "RUNNING BENCHMARK WITH " << repeat << " REPETITIONS" << std::endl;
+    std::cout << std::endl << "RUNNING BENCHMARK WITH " << repeat << " REPETITIONS" << std::endl << std::endl;
     auto results = benchmark(std::get<0>(data), std::get<1>(data), repeat);
     
     std::cout << "Accuracy: " << std::get<0>(results) << " %" << std::endl;
     // std::cout << "Latency: " << std::get<1>(results) << " [ms/elem]" << std::endl;
 	#ifdef REF_ACCURACY
 		float difference = std::get<0>(results) - REF_ACCURACY;
-		std::cout << "Reference Accuracy: " << REF_ACCURACY << " %" << std::endl;
+		std::cout << "Reference Accuracy: " << REF_ACCURACY << " %" << std::endl << std::endl;
 		std::cout << "Difference: " << difference << std::endl;
 	    
         std::cout << std::get<0>(results) << "," << REF_ACCURACY << "," << difference << "," << std::get<1>(results) << std::endl;

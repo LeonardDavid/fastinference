@@ -106,6 +106,9 @@ def render(layer, input_type, layer_id = 0, is_first = False, float_type = "doub
         loader=FileSystemLoader(os.path.join(os.path.dirname(os.path.abspath(__file__)))),
         trim_blocks=True, lstrip_blocks=True, keep_trailing_newline=True
     )
+    cuda_code_predict = ""
+    cuda_kernel_h = ""
+    cuda_impl_h = ""
 
     # print("CURRENT LAYER {}: {}".format(layer_id, layer.name))
     is_first_gemm_after_reshape = False
@@ -172,6 +175,12 @@ def render(layer, input_type, layer_id = 0, is_first = False, float_type = "doub
         )
 
         code_predict = env.get_template('regular_' + layer.name + '.j2').render(
+            layer = layer,
+            layer_id = layer_id,
+            batch_size = batch_size
+        )
+
+        cuda_code_predict = env.get_template('cuda_regular_' + layer.name + '.j2').render(
             layer = layer,
             layer_id = layer_id,
             batch_size = batch_size
@@ -313,7 +322,45 @@ def render(layer, input_type, layer_id = 0, is_first = False, float_type = "doub
             batch_size = batch_size
         )
 
-    return code_alloc, code_init, code_predict, output_type
+        if not isinstance(layer, Step): # for step layers cpu code from above (code_predict) is used
+            cuda_code_predict = env.get_template("cuda_" + layer.name + '.j2').render(
+                layer = layer,
+                binary_word_size = binary_word_size,
+                layer_id = layer_id,
+                align = align,
+                int_type = int_type,
+                uint_type = uint_type,
+                float_type = float_type,
+                popcount = popcount,
+                output_type = output_type,
+                input_type = input_type,
+                is_first_gemm_after_reshape = is_first_gemm_after_reshape,
+                prev_layer_is_step = prev_layer_is_step,
+                batch_size = batch_size
+            )
+
+            if is_first:
+                cuda_impl_h = env.get_template("cuda_l1_impl_h.j2").render(
+                    layer = layer,
+                    layer_id = layer_id
+                )
+
+                cuda_kernel_h = env.get_template("cuda_l1_kernel_h.j2").render(
+                    layer = layer,
+                    layer_id = layer_id
+                )
+            else:
+                cuda_impl_h = env.get_template("cuda_ls_impl_h.j2").render(
+                    layer = layer,
+                    layer_id = layer_id
+                )
+
+            cuda_kernel_h = env.get_template("cuda_ls_kernel_h.j2").render(
+                    layer = layer,
+                    layer_id = layer_id
+                )
+
+    return code_alloc, code_init, code_predict, cuda_code_predict, cuda_impl_h, cuda_kernel_h, output_type
 
 def to_implementation(model, out_path, out_name, weight = 1.0, namespace = "FAST_INFERENCE", align = 0, feature_type = "int", label_type = "int", float_type = "double", int_type = "signed int", uint_type = "unsigned int", infer_types = True, popcount = None, batch_size = 1, **kwargs):
     """
@@ -366,6 +413,9 @@ def to_implementation(model, out_path, out_name, weight = 1.0, namespace = "FAST
     code_init = ""
     code_alloc = ""
     code_predict = ""
+    cuda_code_predict = ""
+    cuda_impl_h = ""
+    cuda_kernel_h = ""
 
     flatten = None
     input_type = feature_type
@@ -406,7 +456,7 @@ def to_implementation(model, out_path, out_name, weight = 1.0, namespace = "FAST
                 ).reshape(layer.weight.shape)
                 flatten = None
 
-        a, i, p, input_type = render(
+        a, i, p, cp, cih, ckh, input_type = render(
             layer,
             is_first = is_first,
             layer_id = layer_id + 1, 
@@ -426,6 +476,7 @@ def to_implementation(model, out_path, out_name, weight = 1.0, namespace = "FAST
             is_first = False
 
         code_init, code_alloc, code_predict = code_init + i, code_alloc + a, code_predict + p
+        cuda_code_predict, cuda_impl_h, cuda_kernel_h = cuda_code_predict + cp, cuda_impl_h + cih, cuda_kernel_h + ckh
 
     env = Environment(
         loader=FileSystemLoader(os.path.join(os.path.dirname(os.path.abspath(__file__)))),
@@ -460,6 +511,23 @@ def to_implementation(model, out_path, out_name, weight = 1.0, namespace = "FAST
 
     )
 
+    utils_cuda = env.get_template("utils_cuda.j2").render(
+
+    )
+
+    implementation_cuda = env.get_template("cuda_impl.j2").render(
+        cuda_code_predict = cuda_code_predict, 
+        batch_size = batch_size
+    )
+
+    header_cuda_implementation = env.get_template("cuda_impl_h.j2").render(
+        cuda_impl_h = cuda_impl_h
+    )
+
+    header_cuda_kernel = env.get_template("cuda_kernel_h.j2").render(
+        cuda_kernel_h = cuda_kernel_h
+    )
+
     with open(os.path.join(out_path, "{}.{}".format(out_name,"cpp") ), 'w') as out_file:
         out_file.write(implementation)
 
@@ -468,3 +536,15 @@ def to_implementation(model, out_path, out_name, weight = 1.0, namespace = "FAST
 
     with open(os.path.join(out_path, "{}.{}".format("utils","h")), 'w') as out_file:
         out_file.write(utils)    
+
+    with open(os.path.join(out_path, "{}.{}".format("utils","cuh")), 'w') as out_file:
+        out_file.write(utils_cuda)  
+
+    with open(os.path.join(out_path, "{}.{}".format(out_name,"cu")), 'w') as out_file:
+        out_file.write(implementation_cuda) 
+
+    with open(os.path.join(out_path, "{}.{}".format("cuda_" + out_name,"h")), 'w') as out_file:
+        out_file.write(header_cuda_implementation)   
+    
+    with open(os.path.join(out_path, "{}.{}".format("cuda_kernel","h")), 'w') as out_file:
+        out_file.write(header_cuda_kernel)   

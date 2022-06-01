@@ -5,5 +5,6 @@ CMakeFiles/testCode.dir/main.cpp.o: main.cpp
 CMakeFiles/testCode.dir/main.cpp.o: model.h
 
 CMakeFiles/testCode.dir/model.cpp.o: model.cpp
+CMakeFiles/testCode.dir/model.cpp.o: modelW.hpp
 CMakeFiles/testCode.dir/model.cpp.o: utils.h
 

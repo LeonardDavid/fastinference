@@ -180,10 +180,34 @@ def render(layer, input_type, layer_id = 0, is_first = False, float_type = "doub
             batch_size = batch_size
         )
 
+        ### CUDA 
+
         cuda_code_predict = env.get_template('cuda_regular_' + layer.name + '.j2').render(
             layer = layer,
             layer_id = layer_id,
+            input_type = input_type,
+            output_type = output_type,
+            input_shape = layer.input_shape,
+            output_shape = layer.output_shape,
+            kernel_shape = layer.kernel_shape,
+            bias_shape = layer.bias.shape,
+            bias_data_type = ctype(layer.bias.dtype) if infer_types else float_type,
+            weight_shape = weight.shape,
+            weight_data_type = ctype(layer.weight.dtype) if infer_types else float_type,
             batch_size = batch_size
+        )
+
+        cuda_impl_h = env.get_template("cuda_ls_impl_h.j2").render(
+            layer = layer,
+            input_type = input_type,
+            output_type = output_type,
+            layer_id = layer_id
+        )
+        cuda_kernel_h = env.get_template("cuda_ls_kernel_h.j2").render(
+            layer = layer,
+            input_type = input_type,
+            output_type = output_type,
+            layer_id = layer_id
         )
     else:
         binary_word_size = infer_binary_wordsize(uint_type)
@@ -321,11 +345,12 @@ def render(layer, input_type, layer_id = 0, is_first = False, float_type = "doub
             prev_layer_is_step = prev_layer_is_step,
             batch_size = batch_size
         )
+    
+        ### CUDA
 
-        if not isinstance(layer, Step): # for step layers cpu code from above (code_predict) is used
+        if not isinstance(layer, (Step, Reshape)): # for step layers cpu code from above (code_predict) is used
             cuda_code_predict = env.get_template("cuda_" + layer.name + '.j2').render(
                 layer = layer,
-                binary_word_size = binary_word_size,
                 layer_id = layer_id,
                 align = align,
                 int_type = int_type,
@@ -342,21 +367,27 @@ def render(layer, input_type, layer_id = 0, is_first = False, float_type = "doub
             if is_first:
                 cuda_impl_h = env.get_template("cuda_l1_impl_h.j2").render(
                     layer = layer,
+                    input_type = input_type,
+                    output_type = output_type,
                     layer_id = layer_id
                 )
-
                 cuda_kernel_h = env.get_template("cuda_l1_kernel_h.j2").render(
                     layer = layer,
+                    input_type = input_type,
+                    output_type = output_type,
                     layer_id = layer_id
                 )
             else:
                 cuda_impl_h = env.get_template("cuda_ls_impl_h.j2").render(
                     layer = layer,
+                    input_type = input_type,
+                    output_type = output_type,
                     layer_id = layer_id
                 )
-
-            cuda_kernel_h = env.get_template("cuda_ls_kernel_h.j2").render(
+                cuda_kernel_h = env.get_template("cuda_ls_kernel_h.j2").render(
                     layer = layer,
+                    input_type = input_type,
+                    output_type = output_type,
                     layer_id = layer_id
                 )
 
@@ -483,9 +514,10 @@ def to_implementation(model, out_path, out_name, weight = 1.0, namespace = "FAST
         trim_blocks=True, lstrip_blocks=True, keep_trailing_newline=True
     )
 
-    code_static = code_init + '\n' + code_alloc
+    code_static = code_alloc + '\n' + code_init
     implementation = env.get_template('base.j2').render(
         name = model.name, 
+        out_name = out_name,
         weight = weight, 
         in_layer_id = 0,
         out_layer_id = len(model.layers),
@@ -517,6 +549,7 @@ def to_implementation(model, out_path, out_name, weight = 1.0, namespace = "FAST
 
     implementation_cuda = env.get_template("cuda_impl.j2").render(
         cuda_code_predict = cuda_code_predict, 
+        out_name = out_name,
         batch_size = batch_size
     )
 
@@ -533,6 +566,9 @@ def to_implementation(model, out_path, out_name, weight = 1.0, namespace = "FAST
 
     with open(os.path.join(out_path, "{}.{}".format(out_name,"h")), 'w') as out_file:
         out_file.write(header)
+
+    with open(os.path.join(out_path, "{}.{}".format(out_name + "W","hpp")), 'w') as out_file:
+        out_file.write(code_static)
 
     with open(os.path.join(out_path, "{}.{}".format("utils","h")), 'w') as out_file:
         out_file.write(utils)    

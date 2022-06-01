@@ -1,1 +1,4 @@
-// layerx_gpu(cuda, cuda) {return layerx_gpu_cuda(cuda, cuda)};
+
+float layer{{layer_id}}_gpu({{input_type}} * layer1, {{output_type}} * layer2){
+    return layer{{layer_id}}_gpu_cuda(layer1, layer2);
+}

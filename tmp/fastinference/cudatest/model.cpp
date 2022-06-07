@@ -190,41 +190,39 @@ predict_cudatest(int const * const x, int * pred) {
     // }
     // cout<<endl;
 
-    // Layer 5: conv2d
-    start = std::chrono::high_resolution_clock::now();
-    for(int b = 0; b < 1; b++){
-      for (int h = 0; h < 11; h++) {
-        for (int w = 0; w < 11; w++) {
-          for (int m = 0; m < 32; m++) {
-            //layer_5_output[b][h][w][m] = layer_5_bias[m];
-            cuda_layer_5_output[index4D(b,h,w,m,11,11,32)] = layer_5_bias[m];
-          }
-          for (int kH = 0; kH < 3; kH++) {
-            for (int kW = 0; kW < 3; kW++) {
-              for (int m = 0; m < 32; m++) {
-                for (int c = 0; c < 1; c++) {
-                  //layer_5_output[b][h][w][m] += 2 * __builtin_popcount((unsigned int)~(unsigned int)(layer_5_weight[kH][kW][m][c] ^ cuda_layer_4_output[index4D(b,(h * 1 + kH - 0),(w * 1 + kW - 0),c,13,13,1)])) - 32;
-                  cuda_layer_5_output[index4D(b,h,w,m,11,11,32)] += 2 * __builtin_popcount((unsigned int)~(unsigned int)(layer_5_weight[kH][kW][m][c] ^ cuda_layer_4_output[index4D(b,(h * 1 + kH - 0),(w * 1 + kW - 0),c,13,13,1)])) - 32;
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-    end = std::chrono::high_resolution_clock::now();
-    auto l5_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());  
-    float l5_kernel_time = 0;
-
+    // // Layer 5: conv2d
+    // start = std::chrono::high_resolution_clock::now();
+    // // for(int b = 0; b < 1; b++){
+    //   for (int h = 0; h < 11; h++) {
+    //     for (int w = 0; w < 11; w++) {
+    //       for (int m = 0; m < 32; m++) {
+    //         cuda_layer_5_output[index4D(b,h,w,m,11,11,32)] = layer_5_bias[m];
+    //       }
+    //       for (int kH = 0; kH < 3; kH++) {
+    //         for (int kW = 0; kW < 3; kW++) {
+    //           for (int m = 0; m < 32; m++) {
+    //             for (int c = 0; c < 1; c++) {
+    //               //               cuda_layer_5_output[index4D(b,h,w,m,11,11,32)] += 2 * __builtin_popcount((unsigned int)~(unsigned int)(layer_5_weight[kH][kW][m][c] ^ cuda_layer_4_output[index4D(b,(h * 1 + kH - 0),(w * 1 + kW - 0),c,13,13,1)])) - 32;
+    //               //             }
+    //           }
+    //         }
+    //       }
+    //     }
+    //   }
+    // }
+    // // end = std::chrono::high_resolution_clock::now();
+    // auto l5_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());  
+    // float l5_kernel_time = 0;
+    // 
     // // checksum L5 = 
-    // ofstream g5("layer5/orig.out");
+    // ofstream g5("outputs/layer5/orig.out");
     // for(int b = 0; b < 1; b++){
     //   sum_cpu = 0;
     //   for (int h = 0; h < 11; h++) {// 
     //     for (int w = 0; w < 11; w++) {
     //       for (int m = 0; m < 32; m++) {
-    //         sum_cpu += layer_5_output[b][h][w][m];
-    //         g5<<layer_5_output[b][h][w][m]<<" ";  
+    //         sum_cpu += cuda_layer_5_output[index4D(b,h,w,m,11,11,32)];
+    //         g5<<cuda_layer_5_output[index4D(b,h,w,m,11,11,32)]<<" ";  
     //       }
     //     }
     //   }
@@ -233,15 +231,16 @@ predict_cudatest(int const * const x, int * pred) {
     // cout<<endl;
 
     /* Layer 5 GPU */ 
-    // start = std::chrono::high_resolution_clock::now();
-    // kernel_time += layer5_gpu(cuda_layer_4_output, cuda_layer_5_output);
-    // end = std::chrono::high_resolution_clock::now();  
-    // auto l5_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());
-    // TODO for loop at the end? float l5_kernel_time = kernel_time-l1_kernel_time-...;
-    // l5_time -= l5_kernel_time*1000000.0f; // ms->ns
+    start = std::chrono::high_resolution_clock::now();
+    kernel_time += layer5_gpu(cuda_layer_4_output, cuda_layer_5_output);
+    end = std::chrono::high_resolution_clock::now();  
+    auto l5_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());
+    //TODO for loop at the end? float l5_kernel_time = kernel_time-l1_kernel_time-...;
+    //l5_time -= l5_kernel_time*1000000.0f; // ms->ns
+    float l5_kernel_time = 0;
 
     // // checksum L5 = 
-    // ofstream gg5("layer5/par.out");
+    // ofstream gg5("outputs/layer5/par.out");
     // for(int b = 0; b < 1; b++){
     //   sum_gpu = 0;
     //   for(int i=b*11*11*32;i<(b+1)*11*11*32;i++){

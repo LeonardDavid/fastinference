@@ -328,8 +328,10 @@ def render(layer, input_type, layer_id = 0, is_first = False, float_type = "doub
         if popcount is None:
             if binary_word_size <= 32:
                 popcount = "__builtin_popcount"
+                popcount_cuda = "__popc"
             else:
                 popcount = "__builtin_popcountll"
+                popcount_cuda = "__popcll"
 
         code_predict = env.get_template(layer.name + '.j2').render(
             layer = layer,
@@ -377,11 +379,13 @@ def render(layer, input_type, layer_id = 0, is_first = False, float_type = "doub
                     weight_data_type = ctype(layer.weight.dtype) if infer_types else float_type,
                     batch_size = batch_size
                 )
-            else:
+            else: # Conv2d
                 cuda_code_predict = env.get_template("cuda_" + layer.name + '.j2').render(
                     layer = layer,
                     layer_id = layer_id,
                     binary_word_size = binary_word_size,
+                    popcount_cuda = popcount_cuda,
+                    uint_type = uint_type,
                     input_type = input_type,
                     output_type = output_type,
                     input_shape = layer.input_shape,
@@ -390,7 +394,7 @@ def render(layer, input_type, layer_id = 0, is_first = False, float_type = "doub
                     bias_shape = layer.bias.shape,
                     bias_data_type = ctype(layer.bias.dtype) if infer_types else float_type,
                     weight_shape = weight.shape,
-                    weight_data_type = ctype(layer.weight.dtype) if infer_types else float_type,
+                    weight_data_type = uint_type, # ctype(layer.weight.dtype) if infer_types else float_type, # <- not delivering the right data type
                     batch_size = batch_size
                 )
 
@@ -408,7 +412,7 @@ def render(layer, input_type, layer_id = 0, is_first = False, float_type = "doub
                     layer_id = layer_id
                 )
             else:
-                if layer_id == 2 or layer_id == 4 or layer_id == 7:
+                if layer_id == 2 or layer_id == 4 or layer_id == 7 or layer_id == 5:
                     cuda_impl_h = env.get_template("cuda_ls_impl_h.j2").render(
                         layer = layer,
                         input_type = input_type,

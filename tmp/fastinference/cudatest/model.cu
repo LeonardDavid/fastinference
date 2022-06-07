@@ -474,4 +474,193 @@ float layer7_gpu_cuda(unsigned int * cuda_layer_6_output, unsigned int * cuda_la
 }
 
 // layer 9 gemm
-// layer 11 gemm
+
+__global__ void layer9_gpu_kernel(unsigned int *d_cuda_layer_8_output, signed char *d_layer_9_bias, unsigned int *d_cuda_layer_9_weight, signed int *d_cuda_layer_9_output){
+
+    int z = blockDim.x * blockIdx.z + threadIdx.x;
+    int y = blockDim.y * blockIdx.y + threadIdx.y;
+
+    int d = z*blockDim.x+y;
+
+    int b = blockIdx.x;
+
+    if(d < 32){
+        if(b < 1){
+            d_cuda_layer_9_output[b * 32 + d] = d_layer_9_bias[d];
+            for(int i = 0; i < 25; i++){
+                d_cuda_layer_9_output[b*32 + d] += 2 * __popc((unsigned int)~(unsigned int)(d_cuda_layer_9_weight[d*25 + i] ^ d_cuda_layer_8_output[b*25 + i])) - 32;
+            }
+        }
+    }   
+}
+
+float layer9_gpu_cuda(unsigned int * cuda_layer_8_output, signed int * cuda_layer_9_output){
+
+    // setUniGPU(); // use the second GPU on Uni-server because the first is used most of the time
+
+    // flatten 3D -> 1D arrays
+    // flatten layer_9_weight
+    unsigned int *cuda_layer_9_weight = (unsigned int *) layer_9_weight;
+
+    // prepare for kernel call
+    // declare storage on device
+    unsigned int *d_cuda_layer_8_output; // storage on device for cuda_layer_8_output
+    signed char *d_layer_9_bias; // storage on device for layer_9_bias
+    unsigned int *d_cuda_layer_9_weight; // storage on device for cuda_layer_9_weight
+    signed int *d_cuda_layer_9_output; // RESULT storage on device for cuda_layer_9_output
+
+    // allocate GPU device buffers
+    // Note: batch_size included in input and output shapes
+    cudaMalloc((void **) &d_cuda_layer_8_output, 1*800*sizeof(unsigned int)); // dim of cuda_layer_8_output
+    cudaMalloc((void **) &d_layer_9_bias, 32*sizeof(signed char)); // dim of layer_9_bias
+    cudaMalloc((void **) &d_cuda_layer_9_weight, 32*800*sizeof(unsigned int)); // dim of layer_9_weight
+    cudaMalloc((void **) &d_cuda_layer_9_output, 1*32*sizeof(signed int)); // dim of layer_9_output
+    cudaCheckErrors("Failed to allocate device buffer");
+
+    // copy input data from host on device
+    cudaMemcpy(d_cuda_layer_8_output, cuda_layer_8_output, (1*800*sizeof(unsigned int)), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_layer_9_bias, layer_9_bias, (32*sizeof(signed char)), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_cuda_layer_9_weight, cuda_layer_9_weight, (32*800*sizeof(unsigned int)), cudaMemcpyHostToDevice);
+    cudaCheckErrors("CUDA memcpy failure");
+
+    // define thread and block sizes
+    /*
+        Maximum threads in a block: 1024 => Maximum block size 32x32
+        if more than 1024 threads are needed, then set block size to maximum (32x32) and put multiple blocks in z-dir
+        else if less than 1024 are needed, then only create 1 (square) block in z-dir, of size ceil(sqrt(THREADS_NEEDED))
+    */
+    const int BLKXSIZE = std::ceil(sqrt(32));
+    const int BLKYSIZE = std::ceil(sqrt(32));
+    const int BLKZSIZE = 1;
+    const int GRIDXSIZE = 1;
+    const int GRIDYSIZE = 1;
+    const int GRIDZSIZE = 1;
+
+    const dim3 threadsPerBlock(BLKXSIZE, BLKYSIZE, BLKZSIZE);
+    const dim3 numBlocks(GRIDXSIZE, GRIDYSIZE, GRIDZSIZE);
+
+    // timing of the kernel
+    cudaEvent_t start, stop;
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+    float milliseconds = 0;
+
+    // compute result - kernel call
+    cudaEventRecord(start);
+    layer9_gpu_kernel<<<numBlocks,threadsPerBlock>>>(d_cuda_layer_8_output, d_layer_9_bias, d_cuda_layer_9_weight, d_cuda_layer_9_output);
+    cudaCheckErrors("Kernel launch failure");
+    cudaEventRecord(stop);
+
+    // synchronize threads
+    cudaDeviceSynchronize();
+    cudaCheckErrors("CUDA synchronize failure");
+    cudaEventElapsedTime(&milliseconds, start, stop);
+
+    // copy result from device to host
+    cudaMemcpy(cuda_layer_9_output, d_cuda_layer_9_output, (1*32*sizeof(signed int)), cudaMemcpyDeviceToHost);
+    cudaCheckErrors("CUDA memcpy failure");
+
+    // free the memory
+    cudaFree(d_cuda_layer_8_output);
+    cudaFree(d_layer_9_bias);
+    cudaFree(d_cuda_layer_9_weight);
+    cudaFree(d_cuda_layer_9_output);
+    cudaCheckErrors("cudaFree fail");
+
+    return milliseconds;
+}// layer 11 gemm
+
+__global__ void layer11_gpu_kernel(unsigned int *d_cuda_layer_10_output, signed char *d_layer_11_bias, unsigned int *d_cuda_layer_11_weight, signed int *d_cuda_layer_11_output){
+
+    int z = blockDim.x * blockIdx.z + threadIdx.x;
+    int y = blockDim.y * blockIdx.y + threadIdx.y;
+
+    int d = z*blockDim.x+y;
+
+    int b = blockIdx.x;
+
+    if(d < 10){
+        if(b < 1){
+            d_cuda_layer_11_output[b * 10 + d] = d_layer_11_bias[d];
+            for(int i = 0; i < 1; i++){
+                d_cuda_layer_11_output[b*10 + d] += 2 * __popc((unsigned int)~(unsigned int)(d_cuda_layer_11_weight[d*1 + i] ^ d_cuda_layer_10_output[b*1 + i])) - 32;
+            }
+        }
+    }   
+}
+
+float layer11_gpu_cuda(unsigned int * cuda_layer_10_output, signed int * cuda_layer_11_output){
+
+    // setUniGPU(); // use the second GPU on Uni-server because the first is used most of the time
+
+    // flatten 3D -> 1D arrays
+    // flatten layer_11_weight
+    unsigned int *cuda_layer_11_weight = (unsigned int *) layer_11_weight;
+
+    // prepare for kernel call
+    // declare storage on device
+    unsigned int *d_cuda_layer_10_output; // storage on device for cuda_layer_10_output
+    signed char *d_layer_11_bias; // storage on device for layer_11_bias
+    unsigned int *d_cuda_layer_11_weight; // storage on device for cuda_layer_11_weight
+    signed int *d_cuda_layer_11_output; // RESULT storage on device for cuda_layer_11_output
+
+    // allocate GPU device buffers
+    // Note: batch_size included in input and output shapes
+    cudaMalloc((void **) &d_cuda_layer_10_output, 1*32*sizeof(unsigned int)); // dim of cuda_layer_10_output
+    cudaMalloc((void **) &d_layer_11_bias, 10*sizeof(signed char)); // dim of layer_11_bias
+    cudaMalloc((void **) &d_cuda_layer_11_weight, 10*32*sizeof(unsigned int)); // dim of layer_11_weight
+    cudaMalloc((void **) &d_cuda_layer_11_output, 1*10*sizeof(signed int)); // dim of layer_11_output
+    cudaCheckErrors("Failed to allocate device buffer");
+
+    // copy input data from host on device
+    cudaMemcpy(d_cuda_layer_10_output, cuda_layer_10_output, (1*32*sizeof(unsigned int)), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_layer_11_bias, layer_11_bias, (10*sizeof(signed char)), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_cuda_layer_11_weight, cuda_layer_11_weight, (10*32*sizeof(unsigned int)), cudaMemcpyHostToDevice);
+    cudaCheckErrors("CUDA memcpy failure");
+
+    // define thread and block sizes
+    /*
+        Maximum threads in a block: 1024 => Maximum block size 32x32
+        if more than 1024 threads are needed, then set block size to maximum (32x32) and put multiple blocks in z-dir
+        else if less than 1024 are needed, then only create 1 (square) block in z-dir, of size ceil(sqrt(THREADS_NEEDED))
+    */
+    const int BLKXSIZE = std::ceil(sqrt(10));
+    const int BLKYSIZE = std::ceil(sqrt(10));
+    const int BLKZSIZE = 1;
+    const int GRIDXSIZE = 1;
+    const int GRIDYSIZE = 1;
+    const int GRIDZSIZE = 1;
+
+    const dim3 threadsPerBlock(BLKXSIZE, BLKYSIZE, BLKZSIZE);
+    const dim3 numBlocks(GRIDXSIZE, GRIDYSIZE, GRIDZSIZE);
+
+    // timing of the kernel
+    cudaEvent_t start, stop;
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+    float milliseconds = 0;
+
+    // compute result - kernel call
+    cudaEventRecord(start);
+    layer11_gpu_kernel<<<numBlocks,threadsPerBlock>>>(d_cuda_layer_10_output, d_layer_11_bias, d_cuda_layer_11_weight, d_cuda_layer_11_output);
+    cudaCheckErrors("Kernel launch failure");
+    cudaEventRecord(stop);
+
+    // synchronize threads
+    cudaDeviceSynchronize();
+    cudaCheckErrors("CUDA synchronize failure");
+    cudaEventElapsedTime(&milliseconds, start, stop);
+
+    // copy result from device to host
+    cudaMemcpy(cuda_layer_11_output, d_cuda_layer_11_output, (1*10*sizeof(signed int)), cudaMemcpyDeviceToHost);
+    cudaCheckErrors("CUDA memcpy failure");
+
+    // free the memory
+    cudaFree(d_cuda_layer_10_output);
+    cudaFree(d_layer_11_bias);
+    cudaFree(d_cuda_layer_11_weight);
+    cudaFree(d_cuda_layer_11_output);
+    cudaCheckErrors("cudaFree fail");
+
+    return milliseconds;
+}

@@ -353,26 +353,45 @@ predict_cudatest(int const * const x, int * pred) {
     float l8_time = 0;
     float l8_kernel_time = 0;
 
-    // Layer 9: Gemm
+    // // Layer 9: Gemm
+    // start = std::chrono::high_resolution_clock::now();
+    //  // for(int b = 0; b < 1; b++){
+    //   for (int d = 0; d < 32; d++) {
+    //     cuda_layer_9_output[b*32 + d] = layer_9_bias[d];
+    //   }
+    //   for (int d = 0; d < 32; d++) {
+    //     for (int i = 0; i < 25; i++) {
+    //       cuda_layer_9_output[b*32 + d] += 2 * __builtin_popcount((unsigned int)~(unsigned int)(layer_9_weight[d][i] ^ cuda_layer_8_output[b*25 + i])) - 32;
+    //     }
+    //   }
+    // }
+    // // end = std::chrono::high_resolution_clock::now();
+    // auto l9_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());  
+    // float l9_kernel_time = 0;
+    // 
+    // // checksum L9 
+    // ofstream g9("outputs/layer9/orig.out");
+    // for(int b = 0; b < 1; b++){
+    //   sum_cpu = 0;
+    //   for (int d = 0; d < 32; d++) {
+    //     sum_cpu += cuda_layer_9_output[b*32 + d];
+    //     g9<<cuda_layer_9_output[b*32 + d]<<" ";  
+    //   }
+    //   cout<<fixed<<"layer 9(CPU): batch "<<b<<": "<<sum_cpu<<endl;
+    // }
+    // cout<<endl;
+
+    /* Layer 9 GPU */ 
     start = std::chrono::high_resolution_clock::now();
-    for(int b = 0; b < 1; b++){
-      for (int d = 0; d < 32; d++) {
-        // layer_9_output[b][d] = layer_9_bias[d];
-        cuda_layer_9_output[b*32 + d] = layer_9_bias[d];
-      }
-      for (int d = 0; d < 32; d++) {
-        for (int i = 0; i < 25; i++) {
-          // layer_9_output[b][d] += 2 * __builtin_popcount((unsigned int)~(unsigned int)(layer_9_weight[d][i] ^ cuda_layer_8_output[i])) - 32;
-          cuda_layer_9_output[b*32 + d] += 2 * __builtin_popcount((unsigned int)~(unsigned int)(layer_9_weight[d][i] ^ cuda_layer_8_output[b*25 + i])) - 32;
-        }
-      }
-    }
-    end = std::chrono::high_resolution_clock::now();
-    auto l9_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());  
+    kernel_time += layer9_gpu(cuda_layer_8_output, cuda_layer_9_output);
+    end = std::chrono::high_resolution_clock::now();  
+    auto l9_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());
+    //TODO for loop at the end? float l9_kernel_time = kernel_time-l1_kernel_time-...;
+    //l9_time -= l9_kernel_time*1000000.0f; // ms->n
     float l9_kernel_time = 0;
 
     // // checksum L9
-    // ofstream gg9("layer9/par.out");
+    // ofstream gg9("outputs/layer9/par.out");
     // for(int b = 0; b < 1; b++){
     //   sum_gpu = 0;
     //   for(int i=b*32;i<(b+1)*32;i++){
@@ -380,26 +399,6 @@ predict_cudatest(int const * const x, int * pred) {
     //     gg9<<cuda_layer_9_output[i]<<" ";  
     //   }
     //   cout<<fixed<<"layer 9(GPU): batch "<<b<<": "<<sum_gpu<<endl;
-    // }
-    // cout<<endl;
-
-    /* Layer 9 GPU */ 
-    // start = std::chrono::high_resolution_clock::now();
-    // kernel_time += layer9_gpu(cuda_layer_8_output, cuda_layer_9_output);
-    // end = std::chrono::high_resolution_clock::now();  
-    // auto l9_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());
-    // TODO for loop at the end? float l9_kernel_time = kernel_time-l1_kernel_time-...;
-    // l9_time -= l9_kernel_time*1000000.0f; // ms->ns
-
-    // // checksum L9 
-    // ofstream g9("layer9/orig.out");
-    // for(int b = 0; b < 1; b++){
-    //   sum_cpu = 0;
-    //   for (int d = 0; d < 32; d++) {
-    //     sum_cpu += layer_9_output[b][d];
-    //     g9<<layer_9_output[b][d]<<" ";  
-    //   }
-    //   cout<<fixed<<"layer 9(CPU): batch "<<b<<": "<<sum_cpu<<endl;
     // }
     // cout<<endl;
 
@@ -415,32 +414,51 @@ predict_cudatest(int const * const x, int * pred) {
       }
     }
 
-    signed int *cuda_layer_10_output = (signed int *) layer_10_output;
+    unsigned int *cuda_layer_10_output = (unsigned int *) layer_10_output;
 
     end = std::chrono::high_resolution_clock::now();
     auto l10_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());  
     float l10_kernel_time = 0;
 
-    // Layer 11: Gemm
+    // // Layer 11: Gemm
+    // start = std::chrono::high_resolution_clock::now();
+    // // for(int b = 0; b < 1; b++){
+    //   for (int d = 0; d < 10; d++) {
+    //     cuda_layer_11_output[b*10 + d] = layer_11_bias[d];
+    //   }
+    //   for (int d = 0; d < 10; d++) {
+    //     for (int i = 0; i < 1; i++) {
+    //       cuda_layer_11_output[b*10 + d] += 2 * __builtin_popcount((unsigned int)~(unsigned int)(layer_11_weight[d][i] ^ cuda_layer_10_output[b*1 + i])) - 32;
+    //     }
+    //   }
+    // }
+    // // end = std::chrono::high_resolution_clock::now();
+    // auto l11_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());  
+    // float l11_kernel_time = 0;
+    // 
+    // // checksum L11 
+    // ofstream g11("outputs/layer11/orig.out");
+    // for(int b = 0; b < 1; b++){
+    //   sum_cpu = 0;
+    //   for (int d = 0; d < 10; d++) {
+    //     sum_cpu += cuda_layer_11_output[b*10 + d];
+    //     g11<<cuda_layer_11_output[b*10 + d]<<" ";  
+    //   }
+    //   cout<<fixed<<"layer 11(CPU): batch "<<b<<": "<<sum_cpu<<endl;
+    // }
+    // cout<<endl;
+
+    /* Layer 11 GPU */ 
     start = std::chrono::high_resolution_clock::now();
-    for(int b = 0; b < 1; b++){
-      for (int d = 0; d < 10; d++) {
-        //layer_11_output[b][d] = layer_11_bias[d];
-        cuda_layer_11_output[b*10 + d] = layer_11_bias[d];
-      }
-      for (int d = 0; d < 10; d++) {
-        for (int i = 0; i < 1; i++) {
-          //layer_11_output[b][d] += 2 * __builtin_popcount((unsigned int)~(unsigned int)(layer_11_weight[d][i] ^ cuda_layer_10_output[b*1 + i])) - 32;
-          cuda_layer_11_output[b*10 + d] += 2 * __builtin_popcount((unsigned int)~(unsigned int)(layer_11_weight[d][i] ^ cuda_layer_10_output[b*1 + i])) - 32;
-        }
-      }
-    }
-    end = std::chrono::high_resolution_clock::now();
-    auto l11_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());  
+    kernel_time += layer11_gpu(cuda_layer_10_output, cuda_layer_11_output);
+    end = std::chrono::high_resolution_clock::now();  
+    auto l11_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());
+    //TODO for loop at the end? float l11_kernel_time = kernel_time-l1_kernel_time-...;
+    //l11_time -= l11_kernel_time*1000000.0f; // ms->n
     float l11_kernel_time = 0;
 
     // // checksum L11
-    // ofstream gg11("layer11/par.out");
+    // ofstream gg11("outputs/layer11/par.out");
     // for(int b = 0; b < 1; b++){
     //   sum_gpu = 0;
     //   for(int i=b*10;i<(b+1)*10;i++){
@@ -448,26 +466,6 @@ predict_cudatest(int const * const x, int * pred) {
     //     gg11<<cuda_layer_11_output[i]<<" ";  
     //   }
     //   cout<<fixed<<"layer 11(GPU): batch "<<b<<": "<<sum_gpu<<endl;
-    // }
-    // cout<<endl;
-
-    /* Layer 11 GPU */ 
-    // start = std::chrono::high_resolution_clock::now();
-    // kernel_time += layer11_gpu(cuda_layer_10_output, cuda_layer_11_output);
-    // end = std::chrono::high_resolution_clock::now();  
-    // auto l11_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());
-    // TODO for loop at the end? float l11_kernel_time = kernel_time-l1_kernel_time-...;
-    // l11_time -= l11_kernel_time*1000000.0f; // ms->ns
-
-    // // checksum L11 
-    // ofstream g11("layer11/orig.out");
-    // for(int b = 0; b < 1; b++){
-    //   sum_cpu = 0;
-    //   for (int d = 0; d < 10; d++) {
-    //     sum_cpu += layer_11_output[b][d];
-    //     g11<<layer_11_output[b][d]<<" ";  
-    //   }
-    //   cout<<fixed<<"layer 11(CPU): batch "<<b<<": "<<sum_cpu<<endl;
     // }
     // cout<<endl;
 

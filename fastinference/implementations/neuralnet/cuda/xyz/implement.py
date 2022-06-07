@@ -197,18 +197,19 @@ def render(layer, input_type, layer_id = 0, is_first = False, float_type = "doub
             batch_size = batch_size
         )
 
-        cuda_impl_h = env.get_template("cuda_ls_impl_h.j2").render(
-            layer = layer,
-            input_type = input_type,
-            output_type = output_type,
-            layer_id = layer_id
-        )
-        cuda_kernel_h = env.get_template("cuda_ls_kernel_h.j2").render(
-            layer = layer,
-            input_type = input_type,
-            output_type = output_type,
-            layer_id = layer_id
-        )
+        if layer_id == 2:
+            cuda_impl_h = env.get_template("cuda_ls_impl_h.j2").render(
+                layer = layer,
+                input_type = input_type,
+                output_type = output_type,
+                layer_id = layer_id
+            )
+            cuda_kernel_h = env.get_template("cuda_ls_kernel_h.j2").render(
+                layer = layer,
+                input_type = input_type,
+                output_type = output_type,
+                layer_id = layer_id
+            )
     else:
         binary_word_size = infer_binary_wordsize(uint_type)
         if isinstance(layer, (LeakyRelu, Relu, Sigmoid, Sign, MaxPool2d, Reshape)):
@@ -364,7 +365,7 @@ def render(layer, input_type, layer_id = 0, is_first = False, float_type = "doub
                 batch_size = batch_size
             )
 
-            if is_first:
+            if is_first: # not used (yet?)
                 cuda_impl_h = env.get_template("cuda_l1_impl_h.j2").render(
                     layer = layer,
                     input_type = input_type,
@@ -378,18 +379,19 @@ def render(layer, input_type, layer_id = 0, is_first = False, float_type = "doub
                     layer_id = layer_id
                 )
             else:
-                cuda_impl_h = env.get_template("cuda_ls_impl_h.j2").render(
-                    layer = layer,
-                    input_type = input_type,
-                    output_type = output_type,
-                    layer_id = layer_id
-                )
-                cuda_kernel_h = env.get_template("cuda_ls_kernel_h.j2").render(
-                    layer = layer,
-                    input_type = input_type,
-                    output_type = output_type,
-                    layer_id = layer_id
-                )
+                if layer_id == 2:
+                    cuda_impl_h = env.get_template("cuda_ls_impl_h.j2").render(
+                        layer = layer,
+                        input_type = input_type,
+                        output_type = output_type,
+                        layer_id = layer_id
+                    )
+                    cuda_kernel_h = env.get_template("cuda_ls_kernel_h.j2").render(
+                        layer = layer,
+                        input_type = input_type,
+                        output_type = output_type,
+                        layer_id = layer_id
+                    )
 
     return code_alloc, code_init, code_predict, cuda_code_predict, cuda_impl_h, cuda_kernel_h, output_type
 

@@ -9,6 +9,7 @@
 
 #include "utils.h"
 #include "modelW.hpp"
+#include "cuda_model.h"
 
 using namespace std;
 
@@ -24,37 +25,39 @@ predict_cudatest(int const * const x, int * pred) {
 	  
     // Layer 1: Reshape
     auto layer_1_output = (int (*)[28][1]) layer_0_output;
+    // flatten layer_1_output
+    int *cuda_layer_1_output = (int *) layer_1_output;
 
     // variables for compatibility
     float l1_time = 0;
     float l1_kernel_time = 0;
 
-    // Layer 2: regular_conv2d
-    auto start = std::chrono::high_resolution_clock::now();
-    for(int b = 0; b < 1; b++){
-    	for (int h = 0; h < 26; h++) {
-    		for (int w = 0; w < 26; w++) {
-    			for (int m = 0; m < 32; m++) {
-    				//layer_2_output[b][h][w][m] = layer_2_bias[m];
-     				cuda_layer_2_output[index4D(b,h,w,m,26,26,32)] = layer_2_bias[m];
-    			}
-    			for (int kH = 0; kH < 3; kH++) {
-    				for (int kW = 0; kW < 3; kW++) {
-    					for (int c = 0; c < 1; c++) {
-    						for (int m = 0; m < 32; m++) {
-                  // not sure if [b] needed in layer_1_output[?][h * 1 + kH - 0][w * 1 + kW - 0][c];
-    							//layer_2_output[b][h][w][m] += layer_2_weight[kH][kW][c][m] * layer_1_output[h * 1 + kH - 0][w * 1 + kW - 0][c];
-    							cuda_layer_2_output[index4D(b,h,w,m,26,26,32)] += layer_2_weight[kH][kW][c][m] * layer_1_output[h * 1 + kH - 0][w * 1 + kW - 0][c];
-    						}
-    					}
-    				}
-    			}
-    		}
-    	}
-    }
-    auto end = std::chrono::high_resolution_clock::now();
-    auto l2_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());
-    float l2_kernel_time = 0;
+    //// Layer 2: regular_conv2d
+    //auto start = std::chrono::high_resolution_clock::now();
+    ////for(int b = 0; b < 1; b++){
+    //	for (int h = 0; h < 26; h++) {
+    //		for (int w = 0; w < 26; w++) {
+    //			for (int m = 0; m < 32; m++) {
+    //				//layer_2_output[b][h][w][m] = layer_2_bias[m];
+    // 				cuda_layer_2_output[index4D(b,h,w,m,26,26,32)] = layer_2_bias[m];
+    //			}
+    //			for (int kH = 0; kH < 3; kH++) {
+    //				for (int kW = 0; kW < 3; kW++) {
+    //					for (int c = 0; c < 1; c++) {
+    //						for (int m = 0; m < 32; m++) {
+    //              // not sure if [b] needed in layer_1_output[?][h * 1 + kH - 0][w * 1 + kW - 0][c];
+    //							//layer_2_output[b][h][w][m] += layer_2_weight[kH][kW][c][m] * layer_1_output[h * 1 + kH - 0][w * 1 + kW - 0][c];
+    //							cuda_layer_2_output[index4D(b,h,w,m,26,26,32)] += layer_2_weight[kH][kW][c][m] * layer_1_output[h * 1 + kH - 0][w * 1 + kW - 0][c];
+    //						}
+    //					}
+    //				}
+    //			}
+    //		}
+    //	}
+    //}
+    ////auto end = std::chrono::high_resolution_clock::now();
+    //auto l2_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());
+    //float l2_kernel_time = 0;
 
     // // checksum L2 = 
     // ofstream g2("layer2/orig.out");
@@ -73,12 +76,12 @@ predict_cudatest(int const * const x, int * pred) {
     // cout<<endl;
 
     /* Layer 2 GPU */
-    // auto start = std::chrono::high_resolution_clock::now();
-    // kernel_time += layer2_gpu(x, cuda_layer_2_output);
-    // auto end = std::chrono::high_resolution_clock::now();
-    // auto l2_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());
-    // float l2_kernel_time = kernel_time;
-    // l2_time -= l2_kernel_time*1000000.0f; // ms->ns
+    auto start = std::chrono::high_resolution_clock::now();
+    kernel_time += layer2_gpu(cuda_layer_1_output, cuda_layer_2_output);
+    auto end = std::chrono::high_resolution_clock::now();
+    auto l2_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());
+    float l2_kernel_time = kernel_time;
+    l2_time -= l2_kernel_time*1000000.0f; // ms->ns
 
     // // checksum L2 = 
     // ofstream gg2("layer2/par.out");

@@ -101,7 +101,7 @@ auto benchmark(std::vector<std::vector<FEATURE_TYPE>> &X, std::vector<unsigned i
 
 			// TODO adapt for multiple batches in the matches code:
 			if constexpr (N_CLASSES >= 2) {
-				for(int b = 0; b < BATCH_SIZE; b++){
+				for(unsigned int b = 0; b < BATCH_SIZE; b++){
 					LABEL_TYPE max = output[b*N_CLASSES];
 					unsigned int argmax = 0;
 					for (unsigned int j = 1; j < N_CLASSES; j++) {
@@ -126,7 +126,9 @@ auto benchmark(std::vector<std::vector<FEATURE_TYPE>> &X, std::vector<unsigned i
 	delete[] output;
 
     auto end = std::chrono::high_resolution_clock::now();   
-    auto total_cpu_time = static_cast<float>(std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count()) / (X.size() * repeat);
+	// TOTAL TIMES AVERAGED BY DIVIDING WITH repeat
+    auto total_cpu_time = static_cast<float>(std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count()) / (repeat);
+	total_kernel_time /= repeat;
 	total_cpu_time -= total_kernel_time;
 	auto cpu_time = static_cast<float>(total_cpu_time) / xsize;
 	auto kernel_time = static_cast<float>(total_kernel_time) / xsize;
@@ -168,6 +170,9 @@ int main (int argc, char *argv[]) {
         std::cout << std::get<0>(results) << "," << "," << "," << std::get<1>(results) << std::endl;
     #endif
 
+	if(repeat > 1){
+		std::cout<<std::endl<<"ALGORITHM REPEATED " << repeat << " > 1 TIMES => TOTAL TIMES ARE AVERAGED (DIVIDED BY " << repeat << std::endl;
+	}
 	printf("\n");
     printf("Total CPU time: %.2f [s] => Latency: %.4f [ms/elem]\n", std::get<1>(results)/1000.0f, std::get<2>(results));
     printf("Total GPU time: %.2f [s] => Latency: %.4f [ms/elem]\n", std::get<3>(results)/1000.0f, std::get<4>(results));
@@ -200,7 +205,7 @@ int main (int argc, char *argv[]) {
 	float l11_ktime = std::get<26>(results)/1000.0f; // ms / 1e3 -> s
 
     float sum_l = l1_time + l2_time + l3_time + l4_time + l5_time + l6_time + l7_time + l8_time + l9_time + l10_time + l11_time;
-    float sum_kl = l1_ktime + l3_ktime + l4_ktime + l6_ktime + l8_ktime + l9_ktime + l11_ktime;
+    float sum_kl = l1_ktime + l2_ktime + l3_ktime + l4_ktime + l5_ktime + l6_ktime + l7_ktime + l8_ktime + l9_ktime + l10_ktime + l11_ktime;
 
 	printf("%-15s %-10.2f [s], %-10s %-5.2f% => %-5s %-5.2f [s] %-10s %-5.2f%\n", "Layer 1 time:", l1_time, "Ratio:", (l1_time/sum_l)*100, "kernel:", l1_ktime, "kRatio:", (l1_ktime/sum_kl)*100);
     printf("%-15s %-10.2f [s], %-10s %-5.2f% => %-5s %-5.2f [s] %-10s %-5.2f%\n", "Layer 2 time:", l2_time, "Ratio:", (l2_time/sum_l)*100, "kernel:", l2_ktime, "kRatio:", (l2_ktime/sum_kl)*100);

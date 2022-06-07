@@ -6,6 +6,16 @@
 
 #IncludeRegexTransform: 
 
+/mnt/c/Users/leona/projects/tu-dortmund/fastinference/tmp/fastinference/cudatest/cuda_kernel.h
+utils.h
+/mnt/c/Users/leona/projects/tu-dortmund/fastinference/tmp/fastinference/cudatest/utils.h
+
+/mnt/c/Users/leona/projects/tu-dortmund/fastinference/tmp/fastinference/cudatest/cuda_model.h
+stdio.h
+-
+cuda_kernel.h
+/mnt/c/Users/leona/projects/tu-dortmund/fastinference/tmp/fastinference/cudatest/cuda_kernel.h
+
 /mnt/c/Users/leona/projects/tu-dortmund/fastinference/tmp/fastinference/cudatest/main.cpp
 iostream
 -
@@ -47,6 +57,8 @@ utils.h
 /mnt/c/Users/leona/projects/tu-dortmund/fastinference/tmp/fastinference/cudatest/utils.h
 modelW.hpp
 /mnt/c/Users/leona/projects/tu-dortmund/fastinference/tmp/fastinference/cudatest/modelW.hpp
+cuda_model.h
+/mnt/c/Users/leona/projects/tu-dortmund/fastinference/tmp/fastinference/cudatest/cuda_model.h
 
 /mnt/c/Users/leona/projects/tu-dortmund/fastinference/tmp/fastinference/cudatest/model.h
 

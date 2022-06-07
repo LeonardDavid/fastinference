@@ -25,49 +25,50 @@ predict_cudatest(int const * const x, int * pred) {
 	  
     // Layer 1: Reshape
     auto layer_1_output = (int (*)[28][1]) layer_0_output;
-    // flatten layer_1_output
+
+    // flatten layer_1_output for CUDA functions
     int *cuda_layer_1_output = (int *) layer_1_output;
 
     // variables for compatibility
     float l1_time = 0;
     float l1_kernel_time = 0;
 
-    //// Layer 2: regular_conv2d
-    //auto start = std::chrono::high_resolution_clock::now();
-    ////for(int b = 0; b < 1; b++){
-    //	for (int h = 0; h < 26; h++) {
-    //		for (int w = 0; w < 26; w++) {
-    //			for (int m = 0; m < 32; m++) {
-    //				//layer_2_output[b][h][w][m] = layer_2_bias[m];
-    // 				cuda_layer_2_output[index4D(b,h,w,m,26,26,32)] = layer_2_bias[m];
-    //			}
-    //			for (int kH = 0; kH < 3; kH++) {
-    //				for (int kW = 0; kW < 3; kW++) {
-    //					for (int c = 0; c < 1; c++) {
-    //						for (int m = 0; m < 32; m++) {
-    //              // not sure if [b] needed in layer_1_output[?][h * 1 + kH - 0][w * 1 + kW - 0][c];
-    //							//layer_2_output[b][h][w][m] += layer_2_weight[kH][kW][c][m] * layer_1_output[h * 1 + kH - 0][w * 1 + kW - 0][c];
-    //							cuda_layer_2_output[index4D(b,h,w,m,26,26,32)] += layer_2_weight[kH][kW][c][m] * layer_1_output[h * 1 + kH - 0][w * 1 + kW - 0][c];
-    //						}
-    //					}
-    //				}
-    //			}
-    //		}
-    //	}
-    //}
-    ////auto end = std::chrono::high_resolution_clock::now();
-    //auto l2_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());
-    //float l2_kernel_time = 0;
+    // // Layer 2: regular_conv2d
+    // auto start = std::chrono::high_resolution_clock::now();
+    // // for(int b = 0; b < 1; b++){
+    // 	for (int h = 0; h < 26; h++) {
+    // 		for (int w = 0; w < 26; w++) {
+    // 			for (int m = 0; m < 32; m++) {
+    // 				//layer_2_output[b][h][w][m] = layer_2_bias[m];
+    //  				cuda_layer_2_output[index4D(b,h,w,m,26,26,32)] = layer_2_bias[m];
+    // 			}
+    // 			for (int kH = 0; kH < 3; kH++) {
+    // 				for (int kW = 0; kW < 3; kW++) {
+    // 					for (int c = 0; c < 1; c++) {
+    // 						for (int m = 0; m < 32; m++) {
+    //               // not sure if [b] needed in layer_1_output[?][h * 1 + kH - 0][w * 1 + kW - 0][c];
+    // 							//layer_2_output[b][h][w][m] += layer_2_weight[kH][kW][c][m] * layer_1_output[h * 1 + kH - 0][w * 1 + kW - 0][c];
+    // 							cuda_layer_2_output[index4D(b,h,w,m,26,26,32)] += layer_2_weight[kH][kW][c][m] * layer_1_output[h * 1 + kH - 0][w * 1 + kW - 0][c];
+    // 						}
+    // 					}
+    // 				}
+    // 			}
+    // 		}
+    // 	}
+    // }
+    // // auto end = std::chrono::high_resolution_clock::now();
+    // auto l2_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());
+    // float l2_kernel_time = 0;
 
     // // checksum L2 = 
-    // ofstream g2("layer2/orig.out");
+    // ofstream g2("outputs/layer2/orig.out");
     // for(int b = 0; b < 1; b++){
     //   sum_cpu = 0;
     //   for (int h = 0; h < 26; h++) {// 
     //     for (int w = 0; w < 26; w++) {
     //       for (int m = 0; m < 32; m++) {
-    //         sum_cpu += layer_2_output[b][h][w][m];
-    //         g2<<layer_2_output[b][h][w][m]<<" ";  
+    //         sum_cpu += cuda_layer_2_output[index4D(b,h,w,m,26,26,32)];
+    //         g2<<cuda_layer_2_output[index4D(b,h,w,m,26,26,32)]<<" ";  
     //       }
     //     }
     //   }
@@ -84,7 +85,7 @@ predict_cudatest(int const * const x, int * pred) {
     l2_time -= l2_kernel_time*1000000.0f; // ms->ns
 
     // // checksum L2 = 
-    // ofstream gg2("layer2/par.out");
+    // ofstream gg2("outputs/layer2/par.out");
     // for(int b = 0; b < 1; b++){
     //   sum_gpu = 0;
     //   for(int i=b*26*26*32;i<(b+1)*26*26*32;i++){
@@ -101,8 +102,9 @@ predict_cudatest(int const * const x, int * pred) {
       for (int h = 0; h < 26; h++) {
         for (int w = 0; w < 26; w++) {
           for (int c = 0; c < 32; c++) {
-            // if (layer_2_output[b][h][w][c] >= layer_3_threshold[c]) {
-            if (cuda_layer_2_output[index4D(b,h,w,c,26,26,32)] >= layer_3_threshold[c]) {  
+            // if (layer_2_output[b][h][w][c] >= layer_3_threshold[c]) 
+            if (cuda_layer_2_output[index4D(b,h,w,c,26,26,32)] >= layer_3_threshold[c]) 
+            { 
               layer_3_output[b][h][w][c / 32] |= (1U << (31 - c % 32));
             } else {
               layer_3_output[b][h][w][c / 32] &= ~(1U << (31 - c % 32));
@@ -112,55 +114,53 @@ predict_cudatest(int const * const x, int * pred) {
       }
     }
 
-    // // might be needed, but subsequent layers work with normal layer_x_output from step
-    // for(int b = 0; b < 1; b++){
-    //   for (int h = 0; h < 26; h++) {
-    //     for (int w = 0; w < 26; w++) {
-    //       for (int c = 0; c < 32; c++) {
-    //         cuda_layer_3_output[index4D(b,h,w,c,26,26,32)] = layer_3_output[b][h][w][c];
-    //       }
-    //     }
-    //   }
-    // }
-
+    // needed for GPU, but on CPU layers work with the normal layer_x_output from step
+    for(int b = 0; b < 1; b++){
+      for (int h = 0; h < 26; h++) {
+        for (int w = 0; w < 26; w++) {
+          for (int c = 0; c < 1; c++) {
+            cuda_layer_3_output[index4D(b,h,w,c,26,26,32)] = layer_3_output[b][h][w][c];
+          }
+        }
+      }
+    }
 
     end = std::chrono::high_resolution_clock::now();
     auto l3_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());  
     float l3_kernel_time = 0;
 
-    // Layer 4: MaxPool
-    start = std::chrono::high_resolution_clock::now();
-    for(int b = 0; b < 1; b++){
-      for (int h = 0; h < 13; h++) {
-        for (int w = 0; w < 13; w++) {
-          for (int c = 0; c < 1; c++) {
-            //layer_4_output[b][h][w][c] = 0;
-            cuda_layer_4_output[index4D(b,h,w,c,13,13,1)] = 0;
-          }
-          for (int kH = 0; kH < 2; kH++) {
-            for (int kW = 0; kW < 2; kW++) {
-              for (int c = 0; c < 1; c++) {
-                //layer_4_output[b][h][w][c] |= layer_3_output[b][h * 2 + kH][w * 2 + kW][c];
-                cuda_layer_4_output[index4D(b,h,w,c,13,13,1)] |= layer_3_output[b][h * 2 + kH][w * 2 + kW][c];
-              }
-            }
-          }
-        }
-      }
-    }
-    end = std::chrono::high_resolution_clock::now();
-    auto l4_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());  
-    float l4_kernel_time = 0;
-
-    // // checksum L4 = 
-    // ofstream g4("layer4/orig.out");
-    // for(int b = 0; b < 1; b++){
-    //   sum_cpu = 0;
-    //   for (int h = 0; h < 13; h++) {// 
+    // // Layer 4: MaxPool
+    // start = std::chrono::high_resolution_clock::now();
+    // // for(int b = 0; b < 1; b++){
+    //   for (int h = 0; h < 13; h++) {
     //     for (int w = 0; w < 13; w++) {
     //       for (int c = 0; c < 1; c++) {
-    //         sum_cpu += layer_4_output[b][h][w][c];
-    //         g4<<layer_4_output[b][h][w][c]<<" ";  
+    //         cuda_layer_4_output[index4D(b,h,w,c,13,13,1)] = 0;
+    //       }
+    //       for (int kH = 0; kH < 2; kH++) {
+    //         for (int kW = 0; kW < 2; kW++) {
+    //           for (int c = 0; c < 1; c++) {
+    //             //             cuda_layer_4_output[index4D(b,h,w,c,13,13,1)] |= layer_3_output[b][h * 2 + kH][w * 2 + kW][c];
+    //             //           }
+    //         }
+    //       }
+    //     }
+    //   }
+    // }
+    // // end = std::chrono::high_resolution_clock::now();
+    // auto l4_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());  
+    // float l4_kernel_time = 0;
+     
+    // // checksum L4 = 
+    // ofstream g4("outputs/layer4/orig.out");
+    // for(int b = 0; b < 1; b++){
+    //   sum_cpu = 0;
+    //   for (int h = 0; h < 13; h++) {
+    //     for (int w = 0; w < 13; w++) {
+    //       //       for (int c = 0; c < 1; c++)
+    //       //       {
+    //         sum_cpu += cuda_layer_4_output[index4D(b,h,w,c,13,13,1)];
+    //         g4<<cuda_layer_4_output[index4D(b,h,w,c,13,13,1)]<<" ";  
     //       }
     //     }
     //   }
@@ -169,18 +169,20 @@ predict_cudatest(int const * const x, int * pred) {
     // cout<<endl;
 
     /* Layer 4 GPU */ 
-    // start = std::chrono::high_resolution_clock::now();
-    // kernel_time += layer4_gpu(cuda_layer_3_output, cuda_layer_4_output);
-    // end = std::chrono::high_resolution_clock::now();  
-    // auto l4_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());
-    // TODO for loop at the end? float l4_kernel_time = kernel_time-l1_kernel_time-...;
+    start = std::chrono::high_resolution_clock::now();
+    kernel_time += layer4_gpu(cuda_layer_3_output, cuda_layer_4_output);
+    end = std::chrono::high_resolution_clock::now();  
+    auto l4_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());
+    //TODO for loop at the end? float l4_kernel_time = kernel_time-l1_kernel_time-...;
     // l4_time -= l4_kernel_time*1000000.0f; // ms->ns
+    float l4_kernel_time = 0;
 
     // // checksum L4 = 
-    // ofstream gg4("layer4/par.out");
+    // ofstream gg4("outputs/layer4/par.out");
     // for(int b = 0; b < 1; b++){
     //   sum_gpu = 0;
-    //   for(int i=b*13*13*32;i<(b+1)*13*13*32;i++){
+    //   //   for(int i=b*13*13*1;i<(b+1)*13*13*1;i++)
+    //   //   {
     //     sum_gpu += cuda_layer_4_output[i];
     //     gg4<<cuda_layer_4_output[i]<<" ";  
     //   }
@@ -256,8 +258,9 @@ predict_cudatest(int const * const x, int * pred) {
       for (int h = 0; h < 11; h++) {
         for (int w = 0; w < 11; w++) {
           for (int c = 0; c < 32; c++) {
-            // if (layer_5_output[b][h][w][c] >= layer_6_threshold[c]) {
-            if (cuda_layer_5_output[index4D(b,h,w,c,11,11,32)] >= layer_6_threshold[c]) {  
+            // if (layer_5_output[b][h][w][c] >= layer_6_threshold[c]) 
+            if (cuda_layer_5_output[index4D(b,h,w,c,11,11,32)] >= layer_6_threshold[c]) 
+            { 
               layer_6_output[b][h][w][c / 32] |= (1U << (31 - c % 32));
             } else {
               layer_6_output[b][h][w][c / 32] &= ~(1U << (31 - c % 32));
@@ -267,55 +270,53 @@ predict_cudatest(int const * const x, int * pred) {
       }
     }
 
-    // // might be needed, but subsequent layers work with normal layer_x_output from step
-    // for(int b = 0; b < 1; b++){
-    //   for (int h = 0; h < 11; h++) {
-    //     for (int w = 0; w < 11; w++) {
-    //       for (int c = 0; c < 32; c++) {
-    //         cuda_layer_6_output[index4D(b,h,w,c,11,11,32)] = layer_6_output[b][h][w][c];
-    //       }
-    //     }
-    //   }
-    // }
-
+    // needed for GPU, but on CPU layers work with the normal layer_x_output from step
+    for(int b = 0; b < 1; b++){
+      for (int h = 0; h < 11; h++) {
+        for (int w = 0; w < 11; w++) {
+          for (int c = 0; c < 1; c++) {
+            cuda_layer_6_output[index4D(b,h,w,c,11,11,32)] = layer_6_output[b][h][w][c];
+          }
+        }
+      }
+    }
 
     end = std::chrono::high_resolution_clock::now();
     auto l6_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());  
     float l6_kernel_time = 0;
 
-    // Layer 7: MaxPool
-    start = std::chrono::high_resolution_clock::now();
-    for(int b = 0; b < 1; b++){
-      for (int h = 0; h < 5; h++) {
-        for (int w = 0; w < 5; w++) {
-          for (int c = 0; c < 1; c++) {
-            //layer_7_output[b][h][w][c] = 0;
-            cuda_layer_7_output[index4D(b,h,w,c,5,5,1)] = 0;
-          }
-          for (int kH = 0; kH < 2; kH++) {
-            for (int kW = 0; kW < 2; kW++) {
-              for (int c = 0; c < 1; c++) {
-                //layer_7_output[b][h][w][c] |= layer_6_output[b][h * 2 + kH][w * 2 + kW][c];
-                cuda_layer_7_output[index4D(b,h,w,c,5,5,1)] |= layer_6_output[b][h * 2 + kH][w * 2 + kW][c];
-              }
-            }
-          }
-        }
-      }
-    }
-    end = std::chrono::high_resolution_clock::now();
-    auto l7_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());  
-    float l7_kernel_time = 0;
-
-    // // checksum L7 = 
-    // ofstream g7("layer7/orig.out");
-    // for(int b = 0; b < 1; b++){
-    //   sum_cpu = 0;
-    //   for (int h = 0; h < 5; h++) {// 
+    // // Layer 7: MaxPool
+    // start = std::chrono::high_resolution_clock::now();
+    // // for(int b = 0; b < 1; b++){
+    //   for (int h = 0; h < 5; h++) {
     //     for (int w = 0; w < 5; w++) {
     //       for (int c = 0; c < 1; c++) {
-    //         sum_cpu += layer_7_output[b][h][w][c];
-    //         g7<<layer_7_output[b][h][w][c]<<" ";  
+    //         cuda_layer_7_output[index4D(b,h,w,c,5,5,1)] = 0;
+    //       }
+    //       for (int kH = 0; kH < 2; kH++) {
+    //         for (int kW = 0; kW < 2; kW++) {
+    //           for (int c = 0; c < 1; c++) {
+    //             //             cuda_layer_7_output[index4D(b,h,w,c,5,5,1)] |= layer_6_output[b][h * 2 + kH][w * 2 + kW][c];
+    //             //           }
+    //         }
+    //       }
+    //     }
+    //   }
+    // }
+    // // end = std::chrono::high_resolution_clock::now();
+    // auto l7_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());  
+    // float l7_kernel_time = 0;
+     
+    // // checksum L7 = 
+    // ofstream g7("outputs/layer7/orig.out");
+    // for(int b = 0; b < 1; b++){
+    //   sum_cpu = 0;
+    //   for (int h = 0; h < 5; h++) {
+    //     for (int w = 0; w < 5; w++) {
+    //       //       for (int c = 0; c < 1; c++)
+    //       //       {
+    //         sum_cpu += cuda_layer_7_output[index4D(b,h,w,c,5,5,1)];
+    //         g7<<cuda_layer_7_output[index4D(b,h,w,c,5,5,1)]<<" ";  
     //       }
     //     }
     //   }
@@ -324,18 +325,20 @@ predict_cudatest(int const * const x, int * pred) {
     // cout<<endl;
 
     /* Layer 7 GPU */ 
-    // start = std::chrono::high_resolution_clock::now();
-    // kernel_time += layer7_gpu(cuda_layer_6_output, cuda_layer_7_output);
-    // end = std::chrono::high_resolution_clock::now();  
-    // auto l7_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());
-    // TODO for loop at the end? float l7_kernel_time = kernel_time-l1_kernel_time-...;
+    start = std::chrono::high_resolution_clock::now();
+    kernel_time += layer7_gpu(cuda_layer_6_output, cuda_layer_7_output);
+    end = std::chrono::high_resolution_clock::now();  
+    auto l7_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());
+    //TODO for loop at the end? float l7_kernel_time = kernel_time-l1_kernel_time-...;
     // l7_time -= l7_kernel_time*1000000.0f; // ms->ns
+    float l7_kernel_time = 0;
 
     // // checksum L7 = 
-    // ofstream gg7("layer7/par.out");
+    // ofstream gg7("outputs/layer7/par.out");
     // for(int b = 0; b < 1; b++){
     //   sum_gpu = 0;
-    //   for(int i=b*5*5*32;i<(b+1)*5*5*32;i++){
+    //   //   for(int i=b*5*5*1;i<(b+1)*5*5*1;i++)
+    //   //   {
     //     sum_gpu += cuda_layer_7_output[i];
     //     gg7<<cuda_layer_7_output[i]<<" ";  
     //   }

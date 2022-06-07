@@ -350,20 +350,49 @@ def render(layer, input_type, layer_id = 0, is_first = False, float_type = "doub
         ### CUDA
 
         if not isinstance(layer, (Step, Reshape)): # for step layers cpu code from above (code_predict) is used
-            cuda_code_predict = env.get_template("cuda_" + layer.name + '.j2').render(
-                layer = layer,
-                layer_id = layer_id,
-                align = align,
-                int_type = int_type,
-                uint_type = uint_type,
-                float_type = float_type,
-                popcount = popcount,
-                output_type = output_type,
-                input_type = input_type,
-                is_first_gemm_after_reshape = is_first_gemm_after_reshape,
-                prev_layer_is_step = prev_layer_is_step,
-                batch_size = batch_size
-            )
+            if isinstance(layer, MaxPool2d): # Maxpool has no attributes: bias, weight
+                cuda_code_predict = env.get_template("cuda_" + layer.name + '.j2').render(
+                    layer = layer,
+                    layer_id = layer_id,
+                    binary_word_size = binary_word_size,
+                    input_type = input_type,
+                    output_type = output_type,
+                    input_shape = layer.input_shape,
+                    output_shape = layer.output_shape,
+                    kernel_shape = layer.kernel_shape,
+                    batch_size = batch_size
+                )
+            elif isinstance(layer, Gemm): # Gemm has no attribute kernel_shape
+                cuda_code_predict = env.get_template("cuda_" + layer.name + '.j2').render(
+                    layer = layer,
+                    layer_id = layer_id,
+                    binary_word_size = binary_word_size,
+                    input_type = input_type,
+                    output_type = output_type,
+                    input_shape = layer.input_shape,
+                    output_shape = layer.output_shape,
+                    bias_shape = layer.bias.shape,
+                    bias_data_type = ctype(layer.bias.dtype) if infer_types else float_type,
+                    weight_shape = weight.shape,
+                    weight_data_type = ctype(layer.weight.dtype) if infer_types else float_type,
+                    batch_size = batch_size
+                )
+            else:
+                cuda_code_predict = env.get_template("cuda_" + layer.name + '.j2').render(
+                    layer = layer,
+                    layer_id = layer_id,
+                    binary_word_size = binary_word_size,
+                    input_type = input_type,
+                    output_type = output_type,
+                    input_shape = layer.input_shape,
+                    output_shape = layer.output_shape,
+                    kernel_shape = layer.kernel_shape,
+                    bias_shape = layer.bias.shape,
+                    bias_data_type = ctype(layer.bias.dtype) if infer_types else float_type,
+                    weight_shape = weight.shape,
+                    weight_data_type = ctype(layer.weight.dtype) if infer_types else float_type,
+                    batch_size = batch_size
+                )
 
             if is_first: # not used (yet?)
                 cuda_impl_h = env.get_template("cuda_l1_impl_h.j2").render(
@@ -379,7 +408,7 @@ def render(layer, input_type, layer_id = 0, is_first = False, float_type = "doub
                     layer_id = layer_id
                 )
             else:
-                if layer_id == 2:
+                if layer_id == 2 or layer_id == 4 or layer_id == 7:
                     cuda_impl_h = env.get_template("cuda_ls_impl_h.j2").render(
                         layer = layer,
                         input_type = input_type,

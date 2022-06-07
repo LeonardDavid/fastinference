@@ -142,18 +142,6 @@ float layer{{layer_id}}_gpu_cuda({{input_type}} * cuda_layer_{{layer_id-1}}_outp
     cudaFree(d_cuda_layer_{{layer_id}}_output);
     cudaCheckErrors("cudaFree fail");
 
-    // // checksum L{{layer_id}}
-    // float sum_gpu = 0;
-    // std::ofstream gg{{layer_id}}("layer{{layer_id}}/par.out");
-    // for(int b = 0; b < {{batch_size}}; b++){
-    //     sum_gpu = 0;
-    //     for(int i = b*{{output_shape[2]}}*{{output_shape[3]}}*{{output_shape[1]}}; i < (b+1)*{{output_shape[2]}}*{{output_shape[3]}}*{{output_shape[1]}}; i++){
-    //         sum_gpu += cuda_layer_{{layer_id}}_output[i];
-    //         gg{{layer_id}}<<cuda_layer_{{layer_id}}_output[i]<<" ";  
-    //     }
-    //     std::cout<<std::fixed<<"layer {{layer_id}}(GPU): batch "<<b<<": "<<sum_gpu<<std::endl;
-    // }
-
     return milliseconds;
 }
 

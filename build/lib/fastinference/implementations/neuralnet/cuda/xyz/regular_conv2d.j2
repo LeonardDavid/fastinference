@@ -2,72 +2,72 @@
  # Convolution
  #}
 
-//// Layer {{ layer_id }}: regular_conv2d
-//auto start = std::chrono::high_resolution_clock::now();
-//{% if layer.pads == [0, 0, 0, 0] %}
-//for(int b = 0; b < {{batch_size}}; b++){
-//	for (int h = 0; h < {{ layer.output_shape[2] }}; h++) {
-//		for (int w = 0; w < {{ layer.output_shape[3] }}; w++) {
-//			for (int m = 0; m < {{ layer.output_shape[1] }}; m++) {
-//				//layer_{{ layer_id }}_output[b][h][w][m] = layer_{{ layer_id }}_bias[m];
-// 				cuda_layer_{{ layer_id }}_output[index4D(b,h,w,m,{{ layer.output_shape[2] }},{{ layer.output_shape[3] }},{{ layer.output_shape[1] }})] = layer_{{ layer_id }}_bias[m];
-//			}
-//			for (int kH = 0; kH < {{ layer.kernel_shape[2] }}; kH++) {
-//				for (int kW = 0; kW < {{ layer.kernel_shape[3] }}; kW++) {
-//					for (int c = 0; c < {{ layer.kernel_shape[1] }}; c++) {
-//						for (int m = 0; m < {{ layer.output_shape[1] }}; m++) {
-//              // not sure if [b] needed in layer_{{ layer_id - 1 }}_output[?][h * {{ layer.strides[0] }} + kH - {{ layer.pads[0] }}][w * {{ layer.strides[1] }} + kW - {{ layer.pads[1] }}][c];
-//							//layer_{{ layer_id }}_output[b][h][w][m] += layer_{{ layer_id }}_weight[kH][kW][c][m] * layer_{{ layer_id - 1 }}_output[h * {{ layer.strides[0] }} + kH - {{ layer.pads[0] }}][w * {{ layer.strides[1] }} + kW - {{ layer.pads[1] }}][c];
-//							cuda_layer_{{ layer_id }}_output[index4D(b,h,w,m,{{ layer.output_shape[2] }},{{ layer.output_shape[3] }},{{ layer.output_shape[1] }})] += layer_{{ layer_id }}_weight[kH][kW][c][m] * layer_{{ layer_id - 1 }}_output[h * {{ layer.strides[0] }} + kH - {{ layer.pads[0] }}][w * {{ layer.strides[1] }} + kW - {{ layer.pads[1] }}][c];
-//						}
-//					}
-//				}
-//			}
-//		}
-//	}
-//}
-//{% else %}
-//for(int b = 0; b < {{batch_size}}; b++){
-//  for (int h = 0; h < {{ layer.output_shape[2] }}; h++) {
-//    for (int w = 0; w < {{ layer.output_shape[3] }}; w++) {
-//      for (int m = 0; m < {{ layer.output_shape[1] }}; m++) {
-//        //layer_{{ layer_id }}_output[b][h][w][m] = layer_{{ layer_id }}_bias[m];
-//        cuda_layer_{{ layer_id }}_output[index4D(b,h,w,m,{{ layer.output_shape[2] }},{{ layer.output_shape[3] }},{{ layer.output_shape[1] }})] = layer_{{ layer_id }}_bias[m];
-//      }
-//      for (int kH = 0; kH < {{ layer.kernel_shape[2] }}; kH++) {
-//        int iH = h * {{ layer.strides[0] }} + kH - {{ layer.pads[0] }};
-//        if (iH >= 0 && iH < {{ input_shape[2] }}) {
-//          for (int kW = 0; kW < {{ layer.kernel_shape[3] }}; kW++) {
-//            int iW = w * {{ layer.strides[1] }} + kW - {{ layer.pads[1] }};
-//            if (iW >= 0 && iW < {{ input_shape[3] }}) {
-//              for (int c = 0; c < {{ layer.kernel_shape[1] }}; c++) {
-//                for (int m = 0; m < {{ layer.output_shape[1] }}; m++) {
-//                  // not sure if [b] needed in layer_{{ layer_id - 1 }}_output[?][iH][iW][c];
-//                  //layer_{{ layer_id }}_output[b][h][w][m] += layer_{{ layer_id }}_weight[kH][kW][c][m] * layer_{{ layer_id - 1 }}_output[iH][iW][c];
-//                  cuda_layer_{{ layer_id }}_output[index4D(b,h,w,m,{{ layer.output_shape[2] }},{{ layer.output_shape[3] }},{{ layer.output_shape[1] }})] += layer_{{ layer_id }}_weight[kH][kW][c][m] * layer_{{ layer_id - 1 }}_output[iH][iW][c];
-//                }
-//              }
-//            }
-//          }
-//        }
-//      }
-//    }
-//  }
-//}
-//{% endif %}
-//auto end = std::chrono::high_resolution_clock::now();
-//auto l{{ layer_id }}_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());
-//float l{{ layer_id }}_kernel_time = 0;
+// // Layer {{ layer_id }}: regular_conv2d
+// auto start = std::chrono::high_resolution_clock::now();
+// {% if layer.pads == [0, 0, 0, 0] %}
+// for(int b = 0; b < {{batch_size}}; b++){
+// 	for (int h = 0; h < {{ layer.output_shape[2] }}; h++) {
+// 		for (int w = 0; w < {{ layer.output_shape[3] }}; w++) {
+// 			for (int m = 0; m < {{ layer.output_shape[1] }}; m++) {
+// 				//layer_{{ layer_id }}_output[b][h][w][m] = layer_{{ layer_id }}_bias[m];
+//  				cuda_layer_{{ layer_id }}_output[index4D(b,h,w,m,{{ layer.output_shape[2] }},{{ layer.output_shape[3] }},{{ layer.output_shape[1] }})] = layer_{{ layer_id }}_bias[m];
+// 			}
+// 			for (int kH = 0; kH < {{ layer.kernel_shape[2] }}; kH++) {
+// 				for (int kW = 0; kW < {{ layer.kernel_shape[3] }}; kW++) {
+// 					for (int c = 0; c < {{ layer.kernel_shape[1] }}; c++) {
+// 						for (int m = 0; m < {{ layer.output_shape[1] }}; m++) {
+//               // not sure if [b] needed in layer_{{ layer_id - 1 }}_output[?][h * {{ layer.strides[0] }} + kH - {{ layer.pads[0] }}][w * {{ layer.strides[1] }} + kW - {{ layer.pads[1] }}][c];
+// 							//layer_{{ layer_id }}_output[b][h][w][m] += layer_{{ layer_id }}_weight[kH][kW][c][m] * layer_{{ layer_id - 1 }}_output[h * {{ layer.strides[0] }} + kH - {{ layer.pads[0] }}][w * {{ layer.strides[1] }} + kW - {{ layer.pads[1] }}][c];
+// 							cuda_layer_{{ layer_id }}_output[index4D(b,h,w,m,{{ layer.output_shape[2] }},{{ layer.output_shape[3] }},{{ layer.output_shape[1] }})] += layer_{{ layer_id }}_weight[kH][kW][c][m] * layer_{{ layer_id - 1 }}_output[h * {{ layer.strides[0] }} + kH - {{ layer.pads[0] }}][w * {{ layer.strides[1] }} + kW - {{ layer.pads[1] }}][c];
+// 						}
+// 					}
+// 				}
+// 			}
+// 		}
+// 	}
+// }
+// {% else %}
+// for(int b = 0; b < {{batch_size}}; b++){
+//   for (int h = 0; h < {{ layer.output_shape[2] }}; h++) {
+//     for (int w = 0; w < {{ layer.output_shape[3] }}; w++) {
+//       for (int m = 0; m < {{ layer.output_shape[1] }}; m++) {
+//         //layer_{{ layer_id }}_output[b][h][w][m] = layer_{{ layer_id }}_bias[m];
+//         cuda_layer_{{ layer_id }}_output[index4D(b,h,w,m,{{ layer.output_shape[2] }},{{ layer.output_shape[3] }},{{ layer.output_shape[1] }})] = layer_{{ layer_id }}_bias[m];
+//       }
+//       for (int kH = 0; kH < {{ layer.kernel_shape[2] }}; kH++) {
+//         int iH = h * {{ layer.strides[0] }} + kH - {{ layer.pads[0] }};
+//         if (iH >= 0 && iH < {{ input_shape[2] }}) {
+//           for (int kW = 0; kW < {{ layer.kernel_shape[3] }}; kW++) {
+//             int iW = w * {{ layer.strides[1] }} + kW - {{ layer.pads[1] }};
+//             if (iW >= 0 && iW < {{ input_shape[3] }}) {
+//               for (int c = 0; c < {{ layer.kernel_shape[1] }}; c++) {
+//                 for (int m = 0; m < {{ layer.output_shape[1] }}; m++) {
+//                   // not sure if [b] needed in layer_{{ layer_id - 1 }}_output[?][iH][iW][c];
+//                   //layer_{{ layer_id }}_output[b][h][w][m] += layer_{{ layer_id }}_weight[kH][kW][c][m] * layer_{{ layer_id - 1 }}_output[iH][iW][c];
+//                   cuda_layer_{{ layer_id }}_output[index4D(b,h,w,m,{{ layer.output_shape[2] }},{{ layer.output_shape[3] }},{{ layer.output_shape[1] }})] += layer_{{ layer_id }}_weight[kH][kW][c][m] * layer_{{ layer_id - 1 }}_output[iH][iW][c];
+//                 }
+//               }
+//             }
+//           }
+//         }
+//       }
+//     }
+//   }
+// }
+// {% endif %}
+// auto end = std::chrono::high_resolution_clock::now();
+// auto l{{ layer_id }}_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());
+// float l{{ layer_id }}_kernel_time = 0;
 
 // // checksum L{{ layer_id }} = 
-// ofstream g{{ layer_id }}("layer{{ layer_id }}/orig.out");
+// ofstream g{{ layer_id }}("outputs/layer{{ layer_id }}/orig.out");
 // for(int b = 0; b < {{ batch_size }}; b++){
 //   sum_cpu = 0;
 //   for (int h = 0; h < {{ layer.output_shape[2] }}; h++) {// 
 //     for (int w = 0; w < {{ layer.output_shape[3] }}; w++) {
 //       for (int m = 0; m < {{ layer.output_shape[1] }}; m++) {
-//         sum_cpu += layer_{{ layer_id }}_output[b][h][w][m];
-//         g{{ layer_id }}<<layer_{{ layer_id }}_output[b][h][w][m]<<" ";  
+//         sum_cpu += cuda_layer_{{ layer_id }}_output[index4D(b,h,w,m,{{ layer.output_shape[2] }},{{ layer.output_shape[3] }},{{ layer.output_shape[1] }})];
+//         g{{ layer_id }}<<cuda_layer_{{ layer_id }}_output[index4D(b,h,w,m,{{ layer.output_shape[2] }},{{ layer.output_shape[3] }},{{ layer.output_shape[1] }})]<<" ";  
 //       }
 //     }
 //   }
@@ -84,7 +84,7 @@ float l{{ layer_id }}_kernel_time = kernel_time;
 l{{ layer_id }}_time -= l{{ layer_id }}_kernel_time*1000000.0f; // ms->ns
 
 // // checksum L{{ layer_id }} = 
-// ofstream gg{{ layer_id }}("layer{{ layer_id }}/par.out");
+// ofstream gg{{ layer_id }}("outputs/layer{{ layer_id }}/par.out");
 // for(int b = 0; b < {{ batch_size }}; b++){
 //   sum_gpu = 0;
 //   for(int i=b*{{ layer.output_shape[2] }}*{{ layer.output_shape[3] }}*{{ layer.output_shape[1] }};i<(b+1)*{{ layer.output_shape[2] }}*{{ layer.output_shape[3] }}*{{ layer.output_shape[1] }};i++){

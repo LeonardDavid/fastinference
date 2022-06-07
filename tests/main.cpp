@@ -91,7 +91,9 @@ auto benchmark(std::vector<std::vector<FEATURE_TYPE>> &X, std::vector<unsigned i
 	        //          SET(MODELNAME "" CACHE STRING "Name of the model / classifier. Usually found in the corresponding JSON file.")
 	        //          target_compile_definitions(testCode PRIVATE -Dpredict=predict_${MODELNAME})
 			//int const * const x = &X[i*NUM_FEATURES];
+
 			FEATURE_TYPE const * const x = &X[i][0];
+			
 			// TODO: generate these:
 			float kernel_time, l1t, l2t, l3t, l4t, l5t, l6t, l7t, l8t, l9t, l10t, l11t, l1kt, l2kt, l3kt, l4kt, l5kt, l6kt, l7kt, l8kt, l9kt, l10kt, l11kt;
 			std::tie(kernel_time, l1t, l2t, l3t, l4t, l5t, l6t, l7t, l8t, l9t, l10t, l11t, l1kt, l2kt, l3kt, l4kt, l5kt, l6kt, l7kt, l8kt, l9kt, l10kt, l11kt) = predict(x, output);

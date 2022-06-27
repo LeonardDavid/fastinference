@@ -1,0 +1,107 @@
+{#
+ # Binary Maximum Pooling
+ #}
+
+// // Layer {{ layer_id }}: MaxPool
+// start = std::chrono::high_resolution_clock::now();
+// {% if layer.pads == [0, 0, 0, 0] %}
+// for(int b = 0; b < {{batch_size}}; b++){
+//   for (int h = 0; h < {{ layer.output_shape[2] }}; h++) {
+//     for (int w = 0; w < {{ layer.output_shape[3] }}; w++) {
+//       for (int c = 0; c < {{ (layer.input_shape[1] / binary_word_size)|round(method='ceil')|int }}; c++) {
+//         cuda_layer_{{ layer_id }}_output[index4D(b,h,w,c,{{ layer.output_shape[2] }},{{ layer.output_shape[3] }},{{ (layer.input_shape[1] / binary_word_size)|round(method='ceil')|int }})] = 0;
+//       }
+//       for (int kH = 0; kH < {{ layer.kernel_shape[0] }}; kH++) {
+//         for (int kW = 0; kW < {{ layer.kernel_shape[1] }}; kW++) {
+//           for (int c = 0; c < {{ (layer.output_shape[1] / binary_word_size)|round(method='ceil')|int }}; c++) {
+//             {% if prev_layer_is_step == true %}
+//             cuda_layer_{{ layer_id }}_output[index4D(b,h,w,c,{{ layer.output_shape[2] }},{{ layer.output_shape[3] }},{{ (layer.output_shape[1] / binary_word_size)|round(method='ceil')|int }})] |= layer_{{ layer_id - 1 }}_output[b][h * {{ layer.strides[0] }} + kH][w * {{ layer.strides[1] }} + kW][c];
+//             {% else %}
+//             cuda_layer_{{ layer_id }}_output[index4D(b,h,w,c,{{ layer.output_shape[2] }},{{ layer.output_shape[3] }},{{ (layer.output_shape[1] / binary_word_size)|round(method='ceil')|int }})] |= cuda_layer_{{ layer_id - 1 }}_output[index4D(b,(h * {{ layer.strides[0] }} + kH),(w * {{ layer.strides[1] }} + kW),c,{{ layer.input_shape[2] }},{{ layer.input_shape[3] }},{{ (layer.output_shape[1] / binary_word_size)|round(method='ceil')|int }})];
+//             {% endif %}
+//           }
+//         }
+//       }
+//     }
+//   }
+// }
+// {% else %}
+// for(int b = 0; b < {{batch_size}}; b++){
+//   for (int h = 0; h < {{ layer.output_shape[2] }}; h++) {
+//     for (int w = 0; w < {{ layer.output_shape[3] }}; w++) {
+//       for (int c = 0; c < {{ (layer.output_shape[1] / binary_word_size)|round(method='ceil')|int }}; c++) {
+//         //layer_{{ layer_id }}_output[b][h][w][c] = 0;
+//         cuda_layer_{{ layer_id }}_output[index4D(b,h,w,c,{{ layer.output_shape[2] }},{{ layer.output_shape[3] }},{{ (layer.output_shape[1] / binary_word_size)|round(method='ceil')|int }})] = 0;
+//       }
+//       for (int kH = 0; kH < {{ layer.kernel_shape[0] }}; kH++) {
+//         int iH = h * {{ layer.strides[0] }} + kH - {{ layer.pads[0] }};
+//         if (iH >= 0 && iH < {{ layer.input_shape[2] }}) {
+//           for (int kW = 0; kW < {{ layer.kernel_shape[1] }}; kW++) {
+//             int iW = w * {{ layer.strides[1] }} + kW - {{ layer.pads[1] }};
+//             if (iW >= 0 && iW < {{ layer.input_shape[3] }}) {
+//               for (int c = 0; c < {{ (layer.output_shape[1] / binary_word_size)|round(method='ceil')|int }}; c++) {
+//                 //layer_{{ layer_id }}_output[b][h][w][c] |= layer_{{ layer_id - 1 }}_output[b][iH][iW][c];
+//                 {% if prev_layer_is_step == true %}
+//                 cuda_layer_{{ layer_id }}_output[index4D(b,h,w,c,{{ layer.output_shape[2] }},{{ layer.output_shape[3] }},{{ (layer.output_shape[1] / binary_word_size)|round(method='ceil')|int }})] |= layer_{{ layer_id - 1 }}_output[b][iH][iW][c];
+//                 {% else %}
+//                 cuda_layer_{{ layer_id }}_output[index4D(b,h,w,c,{{ layer.output_shape[2] }},{{ layer.output_shape[3] }},{{ (layer.output_shape[1] / binary_word_size)|round(method='ceil')|int }})] |= cuda_layer_{{ layer_id - 1 }}_output[index4D(b,iH,iW,c,{{ layer.input_shape[2] }},{{ layer.input_shape[3] }},{{ (layer.output_shape[1] / binary_word_size)|round(method='ceil')|int }})];
+//                 {% endif %}
+//               }
+//             }
+//           }
+//         }
+//       }
+//     }
+//   }
+// }
+// {% endif %}
+// end = std::chrono::high_resolution_clock::now();
+// auto l{{ layer_id }}_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());  
+// float l{{ layer_id }}_kernel_time = 0;
+ 
+// // checksum L{{ layer_id }} = 
+// ofstream g{{ layer_id }}("outputs/layer{{ layer_id }}/orig.out");
+// for(int b = 0; b < {{ batch_size }}; b++){
+//   sum_cpu = 0;
+//   for (int h = 0; h < {{ layer.output_shape[2] }}; h++) {
+//     for (int w = 0; w < {{ layer.output_shape[3] }}; w++) {
+//       {% if layer.pads == [0, 0, 0, 0] %}
+//       for (int c = 0; c < {{ (layer.input_shape[1] / binary_word_size)|round(method='ceil')|int }}; c++)
+//       {% else %}
+//       for (int c = 0; c < {{ (layer.output_shape[1] / binary_word_size)|round(method='ceil')|int }}; c++)
+//       {% endif %}
+//       {
+//         sum_cpu += cuda_layer_{{ layer_id }}_output[index4D(b,h,w,c,{{ layer.output_shape[2] }},{{ layer.output_shape[3] }},{{ (layer.output_shape[1] / binary_word_size)|round(method='ceil')|int }})];
+//         g{{ layer_id }}<<cuda_layer_{{ layer_id }}_output[index4D(b,h,w,c,{{ layer.output_shape[2] }},{{ layer.output_shape[3] }},{{ (layer.output_shape[1] / binary_word_size)|round(method='ceil')|int }})]<<" ";  
+//       }
+//     }
+//   }
+//   cout<<fixed<<"layer {{ layer_id }}(CPU): batch "<<b<<": "<<sum_cpu<<endl;
+// }
+// cout<<endl;
+
+/* Layer {{ layer_id }} GPU */ 
+start = std::chrono::high_resolution_clock::now();
+kernel_time += layer{{ layer_id }}_gpu(cuda_layer_{{ layer_id-1 }}_output, cuda_layer_{{ layer_id }}_output);
+end = std::chrono::high_resolution_clock::now();  
+auto l{{ layer_id }}_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());
+//TODO for loop at the end? float l{{ layer_id }}_kernel_time = kernel_time-l1_kernel_time-...;
+// l{{ layer_id }}_time -= l{{ layer_id }}_kernel_time*1000000.0f; // ms->ns
+float l{{ layer_id }}_kernel_time = 0;
+
+// // checksum L{{ layer_id }} = 
+// ofstream gg{{ layer_id }}("outputs/layer{{ layer_id }}/par.out");
+// for(int b = 0; b < {{ batch_size }}; b++){
+//   sum_gpu = 0;
+//   {% if layer.pads == [0, 0, 0, 0] %}
+//   for(int i=b*{{ layer.output_shape[2] }}*{{ layer.output_shape[3] }}*{{ (layer.input_shape[1] / binary_word_size)|round(method='ceil')|int }};i<(b+1)*{{ layer.output_shape[2] }}*{{ layer.output_shape[3] }}*{{ (layer.input_shape[1] / binary_word_size)|round(method='ceil')|int }};i++)
+//   {% else %}
+//   for(int i=b*{{ layer.output_shape[2] }}*{{ layer.output_shape[3] }}*{{ (layer.output_shape[1] / binary_word_size)|round(method='ceil')|int }};i<(b+1)*{{ layer.output_shape[2] }}*{{ layer.output_shape[3] }}*{{ (layer.output_shape[1] / binary_word_size)|round(method='ceil')|int }};i++)
+//   {% endif %}
+//   {
+//     sum_gpu += cuda_layer_{{ layer_id }}_output[i];
+//     gg{{ layer_id }}<<cuda_layer_{{ layer_id }}_output[i]<<" ";  
+//   }
+//   cout<<fixed<<"layer {{ layer_id }}(GPU): batch "<<b<<": "<<sum_gpu<<endl;
+// }
+// cout<<endl;

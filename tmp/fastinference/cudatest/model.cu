@@ -19,18 +19,20 @@ __global__ void layer2_gpu_kernel(int *d_cuda_layer_1_output, signed char *d_lay
 
     int m = blockIdx.z; // Neurons index on z grid
 
+    int b = blockIdx.x; // Batches index on x grid
+
     if(h < 26 && w < 26){
-        for (int b = 0; b < 1; b++){
-            if (m < 32) {
+        if(b < 1){
+            if(m < 32) {
                 d_cuda_layer_2_output[index4D_cuda(b,h,w,m,26,26,32)] = d_layer_2_bias[m];
             }
         }
 
         for (int kH = 0; kH < 3; kH++) {
             for (int kW = 0; kW < 3; kW++) {
-                for (int b = 0; b < 1; b++){
+                if(b < 1){
                     for (int c = 0; c < 1; c++) {
-                        if (m < 32) {
+                        if(m < 32) {
                             d_cuda_layer_2_output[index4D_cuda(b,h,w,m,26,26,32)] += d_cuda_layer_2_weight[index4D_cuda(kH,kW,c,m,3,1,32)] * d_cuda_layer_1_output[index4D_cuda(b,(h * 1 + kH - 0),(w * 1 + kW - 0),c,28,28,1)];
                         }
                     }
@@ -122,10 +124,12 @@ __global__ void layer4_gpu_kernel(unsigned int *d_cuda_layer_3_output, unsigned 
     int h = threadIdx.x; // modified for work with multiple batches
     int w = blockDim.y * blockIdx.y + threadIdx.y;
 
-    int c = blockIdx.x; // Batches index in grid x dir
+    int c = blockIdx.z; // Neurons index on z grid
+
+    int b = blockIdx.x; // Batches index in grid x dir
     
     if(h < 13 && w < 13){
-        for (int b = 0; b < 1; b++){
+        if(b < 1){
             if(c < 1)
             {
                 d_cuda_layer_4_output[index4D_cuda(b,h,w,c,13,13,1)] = 0;
@@ -134,7 +138,7 @@ __global__ void layer4_gpu_kernel(unsigned int *d_cuda_layer_3_output, unsigned 
 
         for (int kH = 0; kH < 2; kH++) {
             for (int kW = 0; kW < 2; kW++) {
-                for (int b = 0; b < 1; b++){
+                if(b < 1){
                     if(c < 1)
                     {
                         d_cuda_layer_4_output[index4D_cuda(b,h,w,c,13,13,1)] |= d_cuda_layer_3_output[index4D_cuda(b,(h * 2 + kH),(w * 2 + kW),c,26,26,32)];
@@ -215,17 +219,19 @@ __global__ void layer5_gpu_kernel(unsigned int *d_cuda_layer_4_output, signed ch
 
     int m = blockIdx.z; // Neurons index on z grid
 
+    int b = blockIdx.x; // Batches index on x grid
+
     if(h < 11 && w < 11){
-        for (int b = 0; b < 1; b++){
-            if (m < 32) {
+        if(b < 1){
+            if(m < 32) {
                 d_cuda_layer_5_output[index4D_cuda(b,h,w,m,11,11,32)] = d_layer_5_bias[m];
             }
         }
         for (int kH = 0; kH < 3; kH++) {
             for (int kW = 0; kW < 3; kW++) {
-                for (int b = 0; b < 1; b++){
+                if(b < 1){
                     for (int c = 0; c < 1; c++) {
-                        if (m < 32) {
+                        if(m < 32) {
                             d_cuda_layer_5_output[index4D_cuda(b,h,w,m,11,11,32)] += 2 * __popc((unsigned int)~(unsigned int)(d_cuda_layer_5_weight[index4D_cuda(kH,kW,m,c,3,32,1)] ^ d_cuda_layer_4_output[index4D_cuda(b,(h * 1 + kH - 0),(w * 1 + kW - 0),c,13,13,1)])) - 32;
                         }
                     }
@@ -313,10 +319,12 @@ __global__ void layer7_gpu_kernel(unsigned int *d_cuda_layer_6_output, unsigned 
     int h = threadIdx.x; // modified for work with multiple batches
     int w = blockDim.y * blockIdx.y + threadIdx.y;
 
-    int c = blockIdx.x; // Batches index in grid x dir
+    int c = blockIdx.z; // Neurons index on z grid
+
+    int b = blockIdx.x; // Batches index in grid x dir
     
     if(h < 5 && w < 5){
-        for (int b = 0; b < 1; b++){
+        if(b < 1){
             if(c < 1)
             {
                 d_cuda_layer_7_output[index4D_cuda(b,h,w,c,5,5,1)] = 0;
@@ -325,7 +333,7 @@ __global__ void layer7_gpu_kernel(unsigned int *d_cuda_layer_6_output, unsigned 
 
         for (int kH = 0; kH < 2; kH++) {
             for (int kW = 0; kW < 2; kW++) {
-                for (int b = 0; b < 1; b++){
+                if(b < 1){
                     if(c < 1)
                     {
                         d_cuda_layer_7_output[index4D_cuda(b,h,w,c,5,5,1)] |= d_cuda_layer_6_output[index4D_cuda(b,(h * 2 + kH),(w * 2 + kW),c,11,11,32)];
@@ -406,8 +414,10 @@ __global__ void layer9_gpu_kernel(unsigned int *d_cuda_layer_8_output, signed ch
 
     int d = z*blockDim.x+y;
 
+    int b = blockIdx.x;
+
     if(d < 32){
-        for (int b = 0; b < 1; b++){
+        if(b < 1){
             d_cuda_layer_9_output[b * 32 + d] = d_layer_9_bias[d];
             for(int i = 0; i < 25; i++){
                 d_cuda_layer_9_output[b*32 + d] += 2 * __popc((unsigned int)~(unsigned int)(d_cuda_layer_9_weight[d*25 + i] ^ d_cuda_layer_8_output[b*25 + i])) - 32;
@@ -500,8 +510,10 @@ __global__ void layer11_gpu_kernel(unsigned int *d_cuda_layer_10_output, signed 
 
     int d = z*blockDim.x+y;
 
+    int b = blockIdx.x;
+
     if(d < 10){
-        for (int b = 0; b < 1; b++){
+        if(b < 1){
             d_cuda_layer_11_output[b * 10 + d] = d_layer_11_bias[d];
             for(int i = 0; i < 1; i++){
                 d_cuda_layer_11_output[b*10 + d] += 2 * __popc((unsigned int)~(unsigned int)(d_cuda_layer_11_weight[d*1 + i] ^ d_cuda_layer_10_output[b*1 + i])) - 32;

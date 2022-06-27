@@ -13,44 +13,24 @@
 // layer 2 regular_conv2d
 
 __global__ void layer2_gpu_kernel(int *d_cuda_layer_1_output, signed char *d_layer_2_bias, signed char *d_cuda_layer_2_weight, int *d_cuda_layer_2_output){
-
-    int N = (28+1); // +1 to cover all edges (fixes bug #ky2)
-    int kernel_size = 3;
-
-    int tid = threadIdx.x; // = h
-    int bid = blockIdx.y;  // = w
-    int h = tid, w = bid;
-
-    int m = blockIdx.z; // neurons in z-dir
-
-    // batches in x-dir
-    int b = blockIdx.x;
-    //each block is assigned to a row of an image, iy index of y value                  
-    int iy = blockIdx.y + (kernel_size - 1)/2;  
-    //each thread is assigned to a pixel of a row, ix index of x value
-    int ix = threadIdx.x + (kernel_size - 1)/2; 
     
-    //idx global index (all blocks) of the image pixel 
-    int idx = iy*N +ix;
+    int h = threadIdx.x;
+    int w = blockIdx.y * blockIdx.y + threadIdx.y;
 
-    // bias is applied to every pixel
-    if(tid < N){
+    int b = blockIdx.x; // Batches index on x grid
+
+    if(h < 26 && w < 26){
         if(b < 1){
-            if(m < 32) {
+            for (int m=0; m < 32; m++) {
                 d_cuda_layer_2_output[index4D_cuda(b,h,w,m,26,26,32)] = d_layer_2_bias[m];
             }
         }
-    }
 
-    __syncthreads();
-
-    // edge pixels are skipped here because they cannot fit entire convolution window
-    if(idx < N*N){
         for (int kH = 0; kH < 3; kH++) {
             for (int kW = 0; kW < 3; kW++) {
                 if(b < 1){
                     for (int c = 0; c < 1; c++) {
-                        if(m < 32) {
+                        for (int m=0; m < 32; m++) {
                             d_cuda_layer_2_output[index4D_cuda(b,h,w,m,26,26,32)] += d_cuda_layer_2_weight[index4D_cuda(kH,kW,c,m,3,1,32)] * d_cuda_layer_1_output[index4D_cuda(b,(h * 1 + kH - 0),(w * 1 + kW - 0),c,28,28,1)];
                         }
                     }
@@ -93,12 +73,13 @@ float layer2_gpu_cuda(int * cuda_layer_1_output, int * cuda_layer_2_output){
     cudaCheckErrors("CUDA memcpy failure");
 
     // define thread and block sizes
+    // TODO: allow for bigger image sizes than 32x32 (threads/block limit)
     const int BLKXSIZE = 26;
-    const int BLKYSIZE = 1;
+    const int BLKYSIZE = 26;
     const int BLKZSIZE = 1;
     const int GRIDXSIZE = 1;
-    const int GRIDYSIZE = 26;
-    const int GRIDZSIZE = 32;
+    const int GRIDYSIZE = 1;
+    const int GRIDZSIZE = 1;
 
     const dim3 threadsPerBlock(BLKXSIZE, BLKYSIZE, BLKZSIZE);
     const dim3 numBlocks(GRIDXSIZE, GRIDYSIZE, GRIDZSIZE);
@@ -137,44 +118,24 @@ float layer2_gpu_cuda(int * cuda_layer_1_output, int * cuda_layer_2_output){
 // layer 4 maxpool
 
 __global__ void layer4_gpu_kernel(unsigned int *d_cuda_layer_3_output, unsigned int *d_cuda_layer_4_output){
+
+    int h = threadIdx.x; // modified for work with multiple batches
+    int w = blockDim.y * blockIdx.y + threadIdx.y;
+
+    int b = blockIdx.x; // Batches index in grid x dir
     
-    int N = (26+1); // +1 to cover all edges (fixes bug #ky2)
-    int kernel_size = 2;
-
-    int tid = threadIdx.x; // = h
-    int bid = blockIdx.y;  // = w
-    int h = tid, w = bid;
-
-    int c = blockIdx.z; // neurons in z-dir
-
-    // batches in x-dir
-    int b = blockIdx.x;
-    //each block is assigned to a row of an image, iy index of y value                  
-    int iy = blockIdx.y + (kernel_size - 1)/2;  
-    //each thread is assigned to a pixel of a row, ix index of x value
-    int ix = threadIdx.x + (kernel_size - 1)/2; 
-    
-    //idx global index (all blocks) of the image pixel 
-    int idx = iy*N +ix;
-
-    // bias is applied to every pixel
-    if(tid < N){
+    if(h < 13 && w < 13){
         if(b < 1){
-            if(c < 1)
+            for(int c = 0; c < 1; c++)
             {
                 d_cuda_layer_4_output[index4D_cuda(b,h,w,c,13,13,1)] = 0;
             }
         }
-    }
 
-    __syncthreads();
-
-    // edge pixels are skipped here because they cannot fit entire convolution window
-    if(idx < N*N){
         for (int kH = 0; kH < 2; kH++) {
             for (int kW = 0; kW < 2; kW++) {
                 if(b < 1){
-                    if(c < 1)
+                    for(int c = 0; c < 1; c++)
                     {
                         d_cuda_layer_4_output[index4D_cuda(b,h,w,c,13,13,1)] |= d_cuda_layer_3_output[index4D_cuda(b,(h * 2 + kH),(w * 2 + kW),c,26,26,32)];
                     }
@@ -182,7 +143,6 @@ __global__ void layer4_gpu_kernel(unsigned int *d_cuda_layer_3_output, unsigned 
             }
         }
     }
-
 }
 
 float layer4_gpu_cuda(unsigned int * cuda_layer_3_output, unsigned int * cuda_layer_4_output){
@@ -206,11 +166,12 @@ float layer4_gpu_cuda(unsigned int * cuda_layer_3_output, unsigned int * cuda_la
     cudaMemcpy(d_cuda_layer_3_output, cuda_layer_3_output, (1*32*26*26*sizeof(unsigned int)), cudaMemcpyHostToDevice);
 
     // define thread and block sizes
+    // TODO: allow for bigger image sizes than 32x32 (threads/block limit)
     const int BLKXSIZE = 13;
-    const int BLKYSIZE = 1;
+    const int BLKYSIZE = 13;
     const int BLKZSIZE = 1;
     const int GRIDXSIZE = 1;
-    const int GRIDYSIZE = 13;
+    const int GRIDYSIZE = 1;
     const int GRIDZSIZE = 1;
 
     const dim3 threadsPerBlock(BLKXSIZE, BLKYSIZE, BLKZSIZE);
@@ -249,40 +210,20 @@ float layer4_gpu_cuda(unsigned int * cuda_layer_3_output, unsigned int * cuda_la
 
 __global__ void layer5_gpu_kernel(unsigned int *d_cuda_layer_4_output, signed char *d_layer_5_bias, unsigned int *d_cuda_layer_5_weight, signed int *d_cuda_layer_5_output){
     
-    int N = (13+1); // +1 to cover all edges (fixes bug #ky2)
-    int kernel_size = 3;
+    int h = threadIdx.x;
+    int w = blockIdx.y * blockIdx.y + threadIdx.y;
 
-    int tid = threadIdx.x; // = h
-    int bid = blockIdx.y;  // = w
-    int h = tid, w = bid;
+    int b = blockIdx.x; // Batches index on x grid
 
-    int m = blockIdx.z; // neurons in z-dir
-
-    // batches in x-dir
-    int b = blockIdx.x;
-    //each block is assigned to a row of an image, iy index of y value                  
-    int iy = blockIdx.y + (kernel_size - 1)/2;  
-    //each thread is assigned to a pixel of a row, ix index of x value
-    int ix = threadIdx.x + (kernel_size - 1)/2; 
-    
-    //idx global index (all blocks) of the image pixel 
-    int idx = iy*N +ix;
-
-    // bias is applied to every pixel
-    if(tid < N){
+    if(h < 11 && w < 11){
         if(b < 1){
-            if(m < 32) {
+            for (int m=0; m < 32; m++) {
                 d_cuda_layer_5_output[index4D_cuda(b,h,w,m,11,11,32)] = d_layer_5_bias[m];
             }
         }
-    }
-
-    __syncthreads();
-
-    if(idx < N*N){
         for (int kH = 0; kH < 3; kH++) {
             for (int kW = 0; kW < 3; kW++) {
-                if(m < 32) {
+                for (int m=0; m < 32; m++) {
                     for (int c = 0; c < 1; c++) {
                         d_cuda_layer_5_output[index4D_cuda(b,h,w,m,11,11,32)] += 2 * __popc((unsigned int)~(unsigned int)(d_cuda_layer_5_weight[index4D_cuda(kH,kW,m,c,3,32,1)] ^ d_cuda_layer_4_output[index4D_cuda(b,(h * 1 + kH - 0),(w * 1 + kW - 0),c,13,13,1)])) - 32;
                     }
@@ -322,12 +263,13 @@ float layer5_gpu_cuda(unsigned int * cuda_layer_4_output, signed int * cuda_laye
     cudaCheckErrors("CUDA memcpy failure");
 
     // define thread and block sizes
+    // TODO: allow for bigger image sizes than 32x32 (threads/block limit)
     const int BLKXSIZE = 11;
-    const int BLKYSIZE = 1;
+    const int BLKYSIZE = 11;
     const int BLKZSIZE = 1;
     const int GRIDXSIZE = 1;
-    const int GRIDYSIZE = 11;
-    const int GRIDZSIZE = 32;
+    const int GRIDYSIZE = 1;
+    const int GRIDZSIZE = 1;
 
     const dim3 threadsPerBlock(BLKXSIZE, BLKYSIZE, BLKZSIZE);
     const dim3 numBlocks(GRIDXSIZE, GRIDYSIZE, GRIDZSIZE);
@@ -365,44 +307,24 @@ float layer5_gpu_cuda(unsigned int * cuda_layer_4_output, signed int * cuda_laye
 // layer 7 maxpool
 
 __global__ void layer7_gpu_kernel(unsigned int *d_cuda_layer_6_output, unsigned int *d_cuda_layer_7_output){
+
+    int h = threadIdx.x; // modified for work with multiple batches
+    int w = blockDim.y * blockIdx.y + threadIdx.y;
+
+    int b = blockIdx.x; // Batches index in grid x dir
     
-    int N = (11+1); // +1 to cover all edges (fixes bug #ky2)
-    int kernel_size = 2;
-
-    int tid = threadIdx.x; // = h
-    int bid = blockIdx.y;  // = w
-    int h = tid, w = bid;
-
-    int c = blockIdx.z; // neurons in z-dir
-
-    // batches in x-dir
-    int b = blockIdx.x;
-    //each block is assigned to a row of an image, iy index of y value                  
-    int iy = blockIdx.y + (kernel_size - 1)/2;  
-    //each thread is assigned to a pixel of a row, ix index of x value
-    int ix = threadIdx.x + (kernel_size - 1)/2; 
-    
-    //idx global index (all blocks) of the image pixel 
-    int idx = iy*N +ix;
-
-    // bias is applied to every pixel
-    if(tid < N){
+    if(h < 5 && w < 5){
         if(b < 1){
-            if(c < 1)
+            for(int c = 0; c < 1; c++)
             {
                 d_cuda_layer_7_output[index4D_cuda(b,h,w,c,5,5,1)] = 0;
             }
         }
-    }
 
-    __syncthreads();
-
-    // edge pixels are skipped here because they cannot fit entire convolution window
-    if(idx < N*N){
         for (int kH = 0; kH < 2; kH++) {
             for (int kW = 0; kW < 2; kW++) {
                 if(b < 1){
-                    if(c < 1)
+                    for(int c = 0; c < 1; c++)
                     {
                         d_cuda_layer_7_output[index4D_cuda(b,h,w,c,5,5,1)] |= d_cuda_layer_6_output[index4D_cuda(b,(h * 2 + kH),(w * 2 + kW),c,11,11,32)];
                     }
@@ -410,7 +332,6 @@ __global__ void layer7_gpu_kernel(unsigned int *d_cuda_layer_6_output, unsigned 
             }
         }
     }
-
 }
 
 float layer7_gpu_cuda(unsigned int * cuda_layer_6_output, unsigned int * cuda_layer_7_output){
@@ -434,11 +355,12 @@ float layer7_gpu_cuda(unsigned int * cuda_layer_6_output, unsigned int * cuda_la
     cudaMemcpy(d_cuda_layer_6_output, cuda_layer_6_output, (1*32*11*11*sizeof(unsigned int)), cudaMemcpyHostToDevice);
 
     // define thread and block sizes
+    // TODO: allow for bigger image sizes than 32x32 (threads/block limit)
     const int BLKXSIZE = 5;
-    const int BLKYSIZE = 1;
+    const int BLKYSIZE = 5;
     const int BLKZSIZE = 1;
     const int GRIDXSIZE = 1;
-    const int GRIDYSIZE = 5;
+    const int GRIDYSIZE = 1;
     const int GRIDZSIZE = 1;
 
     const dim3 threadsPerBlock(BLKXSIZE, BLKYSIZE, BLKZSIZE);
@@ -568,7 +490,8 @@ float layer9_gpu_cuda(unsigned int * cuda_layer_8_output, signed int * cuda_laye
     cudaCheckErrors("cudaFree fail");
 
     return milliseconds;
-}// layer 11 gemm
+}
+// layer 11 gemm
 
 __global__ void layer11_gpu_kernel(unsigned int *d_cuda_layer_10_output, signed char *d_layer_11_bias, unsigned int *d_cuda_layer_11_weight, signed int *d_cuda_layer_11_output){
 

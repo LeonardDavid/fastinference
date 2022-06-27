@@ -36,9 +36,11 @@ __global__ void layer{{layer_id}}_gpu_kernel({{input_type}} *d_cuda_layer_{{laye
     if(idx < N*N){
         for (int kH = 0; kH < {{ kernel_shape[2] }}; kH++) {
             for (int kW = 0; kW < {{ kernel_shape[3] }}; kW++) {
-                if(m < {{output_shape[1]}}) {
+                if(b < {{batch_size}}){
                     for (int c = 0; c < {{ (input_shape[1] / binary_word_size)|round(method='ceil')|int }}; c++) {
-                        d_cuda_layer_{{ layer_id }}_output[index4D_cuda(b,h,w,m,{{ output_shape[2] }},{{ output_shape[3] }},{{ output_shape[1] }})] += 2 * {{ popcount_cuda }}(({{ uint_type }})~({{ uint_type }})(d_cuda_layer_{{ layer_id }}_weight[index4D_cuda(kH,kW,m,c,{{ kernel_shape[3] }},{{output_shape[1]}},{{ (input_shape[1] / binary_word_size)|round(method='ceil')|int }})] ^ d_cuda_layer_{{ layer_id - 1 }}_output[index4D_cuda(b,(h * {{ layer.strides[0] }} + kH - {{ layer.pads[0] }}),(w * {{ layer.strides[1] }} + kW - {{ layer.pads[1] }}),c,{{ input_shape[2] }},{{ input_shape[3] }},{{ (input_shape[1] / binary_word_size)|round(method='ceil')|int }})])) - {{ binary_word_size }};
+                        if(m < {{output_shape[1]}}) {
+                            d_cuda_layer_{{ layer_id }}_output[index4D_cuda(b,h,w,m,{{ output_shape[2] }},{{ output_shape[3] }},{{ output_shape[1] }})] += 2 * {{ popcount_cuda }}(({{ uint_type }})~({{ uint_type }})(d_cuda_layer_{{ layer_id }}_weight[index4D_cuda(kH,kW,m,c,{{ kernel_shape[3] }},{{output_shape[1]}},{{ (input_shape[1] / binary_word_size)|round(method='ceil')|int }})] ^ d_cuda_layer_{{ layer_id - 1 }}_output[index4D_cuda(b,(h * {{ layer.strides[0] }} + kH - {{ layer.pads[0] }}),(w * {{ layer.strides[1] }} + kW - {{ layer.pads[1] }}),c,{{ input_shape[2] }},{{ input_shape[3] }},{{ (input_shape[1] / binary_word_size)|round(method='ceil')|int }})])) - {{ binary_word_size }};
+                        }
                     }
                 }
             }
@@ -52,9 +54,11 @@ __global__ void layer{{layer_id}}_gpu_kernel({{input_type}} *d_cuda_layer_{{laye
                 for (int kW = 0; kW < {{ kernel_shape[3] }}; kW++) {
                     int iW = w * {{ layer.strides[1] }} + kW - {{ layer.pads[1] }};
                     if (iW >= 0 && iW < {{ input_shape[3] }}) {
-                        if(m < {{output_shape[1]}}) {
+                        if(b < {{batch_size}}){
                             for (int c = 0; c < {{ (input_shape[1] / binary_word_size)|round(method='ceil')|int }}; c++) {
-                                d_cuda_layer_{{ layer_id }}_output[index4D_cuda(b,h,w,m,{{ output_shape[2] }},{{ output_shape[3] }},{{ output_shape[1] }})] += 2 * {{ popcount_cuda }}(({{ uint_type }})~({{ uint_type }})(d_cuda_layer_{{ layer_id }}_weight[index4D_cuda(kH,kW,m,c,{{ kernel_shape[3] }},{{output_shape[1]}},{{ (input_shape[1] / binary_word_size)|round(method='ceil')|int}})] ^ d_cuda_layer_{{ layer_id - 1 }}_output[index4D_cuda(b,iH,iW,c,{{ input_shape[2] }},{{ input_shape[3] }},{{ (input_shape[1] / binary_word_size)|round(method='ceil')|int }})])) - {{ binary_word_size }};
+                                if(m < {{output_shape[1]}}) {
+                                    d_cuda_layer_{{ layer_id }}_output[index4D_cuda(b,h,w,m,{{ output_shape[2] }},{{ output_shape[3] }},{{ output_shape[1] }})] += 2 * {{ popcount_cuda }}(({{ uint_type }})~({{ uint_type }})(d_cuda_layer_{{ layer_id }}_weight[index4D_cuda(kH,kW,m,c,{{ kernel_shape[3] }},{{output_shape[1]}},{{ (input_shape[1] / binary_word_size)|round(method='ceil')|int}})] ^ d_cuda_layer_{{ layer_id - 1 }}_output[index4D_cuda(b,iH,iW,c,{{ input_shape[2] }},{{ input_shape[3] }},{{ (input_shape[1] / binary_word_size)|round(method='ceil')|int }})])) - {{ binary_word_size }};
+                                }
                             }
                         }
                     }

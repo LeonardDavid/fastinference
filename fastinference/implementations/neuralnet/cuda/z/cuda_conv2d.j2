@@ -1,0 +1,120 @@
+// layer {{layer_id}} conv2d
+
+__global__ void layer{{layer_id}}_gpu_kernel({{input_type}} *d_cuda_layer_{{layer_id-1}}_output, {{bias_data_type}} *d_layer_{{layer_id}}_bias, {{weight_data_type}} *d_cuda_layer_{{layer_id}}_weight, {{output_type}} *d_cuda_layer_{{layer_id}}_output){
+    
+    int h = threadIdx.x;
+    int w = blockIdx.y * blockIdx.y + threadIdx.y;
+
+    int m = blockIdx.z; // Neurons index on z grid
+
+    if(h < {{output_shape[2]}} && w < {{output_shape[3]}}){
+        for (int b = 0; b < {{batch_size}}; b++){
+            if (m < {{output_shape[1]}}) {
+                d_cuda_layer_{{ layer_id }}_output[index4D_cuda(b,h,w,m,{{ output_shape[2] }},{{ output_shape[3] }},{{ output_shape[1] }})] = d_layer_{{ layer_id }}_bias[m];
+            }
+        }
+        {% if layer.pads == [0, 0, 0, 0] %}
+        for (int kH = 0; kH < {{ kernel_shape[2] }}; kH++) {
+            for (int kW = 0; kW < {{ kernel_shape[3] }}; kW++) {
+                for (int b = 0; b < {{batch_size}}; b++){
+                    for (int c = 0; c < {{ (input_shape[1] / binary_word_size)|round(method='ceil')|int }}; c++) {
+                        if (m < {{output_shape[1]}}) {
+                            d_cuda_layer_{{ layer_id }}_output[index4D_cuda(b,h,w,m,{{ output_shape[2] }},{{ output_shape[3] }},{{ output_shape[1] }})] += 2 * {{ popcount_cuda }}(({{ uint_type }})~({{ uint_type }})(d_cuda_layer_{{ layer_id }}_weight[index4D_cuda(kH,kW,m,c,{{ kernel_shape[3] }},{{output_shape[1]}},{{ (input_shape[1] / binary_word_size)|round(method='ceil')|int }})] ^ d_cuda_layer_{{ layer_id - 1 }}_output[index4D_cuda(b,(h * {{ layer.strides[0] }} + kH - {{ layer.pads[0] }}),(w * {{ layer.strides[1] }} + kW - {{ layer.pads[1] }}),c,{{ input_shape[2] }},{{ input_shape[3] }},{{ (input_shape[1] / binary_word_size)|round(method='ceil')|int }})])) - {{ binary_word_size }};
+                        }
+                    }
+                }
+            }
+        }
+        {% else %}
+        for (int kH = 0; kH < {{ kernel_shape[2] }}; kH++) {
+            int iH = h * {{ layer.strides[0] }} + kH - {{ layer.pads[0] }};
+            if (iH >= 0 && iH < {{ input_shape[2] }}) {
+                for (int kW = 0; kW < {{ kernel_shape[3] }}; kW++) {
+                    int iW = w * {{ layer.strides[1] }} + kW - {{ layer.pads[1] }};
+                    if (iW >= 0 && iW < {{ input_shape[3] }}) {
+                        for (int b = 0; b < {{batch_size}}; b++){
+                            for (int c = 0; c < {{ (input_shape[1] / binary_word_size)|round(method='ceil')|int }}; c++) {
+                                if (m < {{output_shape[1]}}) {
+                                    d_cuda_layer_{{ layer_id }}_output[index4D_cuda(b,h,w,m,{{ output_shape[2] }},{{ output_shape[3] }},{{ output_shape[1] }})] += 2 * {{ popcount_cuda }}(({{ uint_type }})~({{ uint_type }})(d_cuda_layer_{{ layer_id }}_weight[index4D_cuda(kH,kW,m,c,{{ kernel_shape[3] }},{{output_shape[1]}},{{ (input_shape[1] / binary_word_size)|round(method='ceil')|int}})] ^ d_cuda_layer_{{ layer_id - 1 }}_output[index4D_cuda(b,iH,iW,c,{{ input_shape[2] }},{{ input_shape[3] }},{{ (input_shape[1] / binary_word_size)|round(method='ceil')|int }})])) - {{ binary_word_size }};
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        {% endif %}
+    }
+}
+
+float layer{{layer_id}}_gpu_cuda({{input_type}} * cuda_layer_{{layer_id-1}}_output, {{output_type}} * cuda_layer_{{layer_id}}_output){
+
+    //setUniGPU(); // use the second GPU on Uni-server because the first is used most of the time
+
+    // flatten 3D -> 1D arrays
+    // flatten layer_{{layer_id}}_weight
+    {{weight_data_type}} *cuda_layer_{{layer_id}}_weight = ({{weight_data_type}} *) layer_{{layer_id}}_weight;
+
+    // prepare for kernel call
+    // declare storage on device
+    {{input_type}} *d_cuda_layer_{{layer_id-1}}_output; // storage on device for cuda_layer_{{layer_id-1}}_output
+    {{bias_data_type}} *d_layer_{{layer_id}}_bias; // storage on device for layer_{{layer_id}}_bias
+    {{weight_data_type}} *d_cuda_layer_{{layer_id}}_weight; // storage on device for cuda_layer_{{layer_id}}_weight
+    {{output_type}} *d_cuda_layer_{{layer_id}}_output; // RESULT storage on device for cuda_layer_{{layer_id}}_output
+
+    // allocate GPU device buffers
+    // Note: batch_size included in input and output shapes
+    cudaMalloc((void **) &d_cuda_layer_{{layer_id-1}}_output, {{ input_shape|join('*') }}*sizeof({{input_type}})); // dim of cuda_layer_{{layer_id-1}}_output
+    cudaMalloc((void **) &d_layer_{{layer_id}}_bias, {{bias_shape[0]}}*sizeof({{bias_data_type}})); // dim of layer_{{layer_id}}_bias
+    cudaMalloc((void **) &d_cuda_layer_{{layer_id}}_weight, {{ weight_shape|join('*') }}*sizeof({{weight_data_type}})); // dim of layer_{{layer_id}}_weight
+    cudaMalloc((void **) &d_cuda_layer_{{layer_id}}_output, {{ output_shape|join('*') }}*sizeof({{output_type}})); // dim of layer_{{layer_id}}_output
+    cudaCheckErrors("Failed to allocate device buffer");
+
+    // copy input data from host on device
+    cudaMemcpy(d_cuda_layer_{{layer_id-1}}_output, cuda_layer_{{layer_id-1}}_output, ({{ input_shape|join('*') }}*sizeof({{input_type}})), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_layer_{{layer_id}}_bias, layer_{{layer_id}}_bias, ({{bias_shape[0]}}*sizeof({{bias_data_type}})), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_cuda_layer_{{layer_id}}_weight, cuda_layer_{{layer_id}}_weight, ({{ weight_shape|join('*') }}*sizeof({{weight_data_type}})), cudaMemcpyHostToDevice);
+    cudaCheckErrors("CUDA memcpy failure");
+
+    // define thread and block sizes
+    // TODO: allow for bigger image sizes than 32x32 (threads/block limit)
+    const int BLKXSIZE = {{output_shape[2]}};
+    const int BLKYSIZE = {{output_shape[3]}};
+    const int BLKZSIZE = 1;
+    const int GRIDXSIZE = 1;
+    const int GRIDYSIZE = 1;
+    const int GRIDZSIZE = {{output_shape[1]}};
+
+    const dim3 threadsPerBlock(BLKXSIZE, BLKYSIZE, BLKZSIZE);
+    const dim3 numBlocks(GRIDXSIZE, GRIDYSIZE, GRIDZSIZE);
+
+    // timing of the kernel
+    cudaEvent_t start, stop;
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+    float milliseconds = 0;
+
+    // compute result - kernel call
+    cudaEventRecord(start);
+    layer{{layer_id}}_gpu_kernel<<<numBlocks,threadsPerBlock>>>(d_cuda_layer_{{layer_id-1}}_output, d_layer_{{layer_id}}_bias, d_cuda_layer_{{layer_id}}_weight, d_cuda_layer_{{layer_id}}_output);
+    cudaCheckErrors("Kernel launch failure");
+    cudaEventRecord(stop);
+
+    // synchronize threads
+    cudaDeviceSynchronize();
+    cudaCheckErrors("CUDA synchronize failure");
+    cudaEventElapsedTime(&milliseconds, start, stop);
+
+    // copy result from device to host
+    cudaMemcpy(cuda_layer_{{layer_id}}_output, d_cuda_layer_{{layer_id}}_output, ({{ output_shape|join('*') }}*sizeof({{output_type}})), cudaMemcpyDeviceToHost);
+    cudaCheckErrors("CUDA memcpy failure");
+
+    // free the memory
+    cudaFree(d_cuda_layer_{{layer_id-1}}_output);
+    cudaFree(d_layer_{{layer_id}}_bias);
+    cudaFree(d_cuda_layer_{{layer_id}}_weight);
+    cudaFree(d_cuda_layer_{{layer_id}}_output);
+    cudaCheckErrors("cudaFree fail");
+
+    return milliseconds;
+}

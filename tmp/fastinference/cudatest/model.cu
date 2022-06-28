@@ -21,8 +21,6 @@ __global__ void layer2_gpu_kernel(int *d_cuda_layer_1_output, signed char *d_lay
     int bid = blockIdx.y;  // = w
     int h = tid, w = bid;
 
-    int m = blockIdx.z; // neurons in z-dir
-
     //each block is assigned to a row of an image, iy index of y value                  
     int iy = blockIdx.y + (kernel_size - 1)/2;  
     //each thread is assigned to a pixel of a row, ix index of x value
@@ -34,7 +32,7 @@ __global__ void layer2_gpu_kernel(int *d_cuda_layer_1_output, signed char *d_lay
     // bias is applied to every pixel
     if(tid < N){
         for (int b = 0; b < 1; b++){
-            if(m < 32) {
+            for (int m = 0; m < 32; m++) {
                 d_cuda_layer_2_output[index4D_cuda(b,h,w,m,26,26,32)] = d_layer_2_bias[m];
             }
         }
@@ -48,7 +46,7 @@ __global__ void layer2_gpu_kernel(int *d_cuda_layer_1_output, signed char *d_lay
             for (int kW = 0; kW < 3; kW++) {
                 for (int b = 0; b < 1; b++){
                     for (int c = 0; c < 1; c++) {
-                        if(m < 32) {
+                        for (int m = 0; m < 32; m++) {
                             d_cuda_layer_2_output[index4D_cuda(b,h,w,m,26,26,32)] += d_cuda_layer_2_weight[index4D_cuda(kH,kW,c,m,3,1,32)] * d_cuda_layer_1_output[index4D_cuda(b,(h * 1 + kH - 0),(w * 1 + kW - 0),c,28,28,1)];
                         }
                     }
@@ -96,7 +94,7 @@ float layer2_gpu_cuda(int * cuda_layer_1_output, int * cuda_layer_2_output){
     const int BLKZSIZE = 1;
     const int GRIDXSIZE = 1;
     const int GRIDYSIZE = 26;
-    const int GRIDZSIZE = 32;
+    const int GRIDZSIZE = 1;
 
     const dim3 threadsPerBlock(BLKXSIZE, BLKYSIZE, BLKZSIZE);
     const dim3 numBlocks(GRIDXSIZE, GRIDYSIZE, GRIDZSIZE);
@@ -143,8 +141,6 @@ __global__ void layer4_gpu_kernel(unsigned int *d_cuda_layer_3_output, unsigned 
     int bid = blockIdx.y;  // = w
     int h = tid, w = bid;
 
-    int c = blockIdx.z; // neurons in z-dir
-
     //each block is assigned to a row of an image, iy index of y value                  
     int iy = blockIdx.y + (kernel_size - 1)/2;  
     //each thread is assigned to a pixel of a row, ix index of x value
@@ -156,7 +152,7 @@ __global__ void layer4_gpu_kernel(unsigned int *d_cuda_layer_3_output, unsigned 
     // bias is applied to every pixel
     if(tid < N){
         for (int b = 0; b < 1; b++){
-            if(c < 1)
+            for (int c = 0; c < 1; c++)
             {
                 d_cuda_layer_4_output[index4D_cuda(b,h,w,c,13,13,1)] = 0;
             }
@@ -170,7 +166,7 @@ __global__ void layer4_gpu_kernel(unsigned int *d_cuda_layer_3_output, unsigned 
         for (int kH = 0; kH < 2; kH++) {
             for (int kW = 0; kW < 2; kW++) {
                 for (int b = 0; b < 1; b++){
-                    if(c < 1)
+                    for (int c = 0; c < 1; c++)
                     {
                         d_cuda_layer_4_output[index4D_cuda(b,h,w,c,13,13,1)] |= d_cuda_layer_3_output[index4D_cuda(b,(h * 2 + kH),(w * 2 + kW),c,26,26,32)];
                     }
@@ -252,8 +248,6 @@ __global__ void layer5_gpu_kernel(unsigned int *d_cuda_layer_4_output, signed ch
     int bid = blockIdx.y;  // = w
     int h = tid, w = bid;
 
-    int m = blockIdx.z; // neurons in z-dir
-
     //each block is assigned to a row of an image, iy index of y value                  
     int iy = blockIdx.y + (kernel_size - 1)/2;  
     //each thread is assigned to a pixel of a row, ix index of x value
@@ -265,7 +259,7 @@ __global__ void layer5_gpu_kernel(unsigned int *d_cuda_layer_4_output, signed ch
     // bias is applied to every pixel
     if(tid < N){
         for (int b = 0; b < 1; b++){
-            if(m < 32) {
+            for (int m = 0; m < 32; m++) {
                 d_cuda_layer_5_output[index4D_cuda(b,h,w,m,11,11,32)] = d_layer_5_bias[m];
             }
         }
@@ -278,7 +272,7 @@ __global__ void layer5_gpu_kernel(unsigned int *d_cuda_layer_4_output, signed ch
             for (int kW = 0; kW < 3; kW++) {
                 for (int b = 0; b < 1; b++){
                     for (int c = 0; c < 1; c++) {
-                        if(m < 32) {
+                        for (int m = 0; m < 32; m++) {
                             d_cuda_layer_5_output[index4D_cuda(b,h,w,m,11,11,32)] += 2 * __popc((unsigned int)~(unsigned int)(d_cuda_layer_5_weight[index4D_cuda(kH,kW,m,c,3,32,1)] ^ d_cuda_layer_4_output[index4D_cuda(b,(h * 1 + kH - 0),(w * 1 + kW - 0),c,13,13,1)])) - 32;
                         }
                     }
@@ -323,7 +317,7 @@ float layer5_gpu_cuda(unsigned int * cuda_layer_4_output, signed int * cuda_laye
     const int BLKZSIZE = 1;
     const int GRIDXSIZE = 1;
     const int GRIDYSIZE = 11;
-    const int GRIDZSIZE = 32;
+    const int GRIDZSIZE = 1;
 
     const dim3 threadsPerBlock(BLKXSIZE, BLKYSIZE, BLKZSIZE);
     const dim3 numBlocks(GRIDXSIZE, GRIDYSIZE, GRIDZSIZE);
@@ -369,8 +363,6 @@ __global__ void layer7_gpu_kernel(unsigned int *d_cuda_layer_6_output, unsigned 
     int bid = blockIdx.y;  // = w
     int h = tid, w = bid;
 
-    int c = blockIdx.z; // neurons in z-dir
-
     //each block is assigned to a row of an image, iy index of y value                  
     int iy = blockIdx.y + (kernel_size - 1)/2;  
     //each thread is assigned to a pixel of a row, ix index of x value
@@ -382,7 +374,7 @@ __global__ void layer7_gpu_kernel(unsigned int *d_cuda_layer_6_output, unsigned 
     // bias is applied to every pixel
     if(tid < N){
         for (int b = 0; b < 1; b++){
-            if(c < 1)
+            for (int c = 0; c < 1; c++)
             {
                 d_cuda_layer_7_output[index4D_cuda(b,h,w,c,5,5,1)] = 0;
             }
@@ -396,7 +388,7 @@ __global__ void layer7_gpu_kernel(unsigned int *d_cuda_layer_6_output, unsigned 
         for (int kH = 0; kH < 2; kH++) {
             for (int kW = 0; kW < 2; kW++) {
                 for (int b = 0; b < 1; b++){
-                    if(c < 1)
+                    for (int c = 0; c < 1; c++)
                     {
                         d_cuda_layer_7_output[index4D_cuda(b,h,w,c,5,5,1)] |= d_cuda_layer_6_output[index4D_cuda(b,(h * 2 + kH),(w * 2 + kW),c,11,11,32)];
                     }

@@ -1,0 +1,63 @@
+{#
+ # Binary Step Function
+ #}
+
+{% set bit = '1ULL' if binary_word_size >= 64 else '1U' %}
+// Layer {{ layer_id }}: Step
+start = std::chrono::high_resolution_clock::now();
+{% if layer.output_shape|length > 2 %}
+for(int b = 0; b < {{batch_size}}; b++){
+  for (int h = 0; h < {{ layer.output_shape[2] }}; h++) {
+    for (int w = 0; w < {{ layer.output_shape[3] }}; w++) {
+      for (int c = 0; c < {{ layer.output_shape[1] }}; c++) {
+        // if (layer_{{ layer_id - 1 }}_output[b][h][w][c] {% if layer.threshold_is_high %}>={% else %}>{% endif %} {% if layer.threshold is iterable %}layer_{{ layer_id }}_threshold[c]{% else %}{{ layer.threshold }}{% endif %}) 
+        if (cuda_layer_{{ layer_id - 1 }}_output[index4D(b,h,w,c,{{ layer.output_shape[2] }},{{ layer.output_shape[3] }},{{ layer.output_shape[1] }})] {% if layer.threshold_is_high %}>={% else %}>{% endif %} {% if layer.threshold is iterable %}layer_{{ layer_id }}_threshold[c]{% else %}{{ layer.threshold }}{% endif %}) 
+        { 
+          layer_{{ layer_id }}_output[b][h][w][c / {{ [layer.output_shape[1], binary_word_size]|min }}] |= ({{ bit }} << ({{ binary_word_size - 1}} - c % {{ [layer.output_shape[1], binary_word_size]|min }}));
+        } else {
+          layer_{{ layer_id }}_output[b][h][w][c / {{ [layer.output_shape[1], binary_word_size]|min }}] &= ~({{ bit }} << ({{ binary_word_size - 1}} - c % {{ [layer.output_shape[1], binary_word_size]|min }}));
+        }
+      }
+      {% if layer.output_shape[1] % binary_word_size != 0 %}
+      for (int c = {{ layer.output_shape[1] }}; c < {{ (layer.output_shape[1] / binary_word_size)|round(method='ceil')|int * binary_word_size }}; c++) {
+        layer_{{ layer_id }}_output[b][h][w][c / {{ [layer.output_shape[1], binary_word_size]|min }}] &= ~({{ bit }} << ({{ binary_word_size - 1}} - c % {{ [layer.output_shape[1], binary_word_size]|min }}));
+      }
+      {% endif %}
+    }
+  }
+}
+
+// needed for GPU, but on CPU layers work with the normal layer_x_output from step
+for(int b = 0; b < {{batch_size}}; b++){
+  for (int h = 0; h < {{ layer.output_shape[2] }}; h++) {
+    for (int w = 0; w < {{ layer.output_shape[3] }}; w++) {
+      for (int c = 0; c < {{ (layer.output_shape[1] / binary_word_size)|round(method='ceil')|int }}; c++) {
+        cuda_layer_{{ layer_id }}_output[index4D(b,h,w,c,{{ layer.output_shape[2] }},{{ layer.output_shape[3] }},{{ layer.output_shape[1] }})] = layer_{{ layer_id }}_output[b][h][w][c];
+      }
+    }
+  }
+}
+{% else %}
+for(int b = 0; b < {{batch_size}}; b++){
+  for (int d = 0; d < {{ layer.output_shape[1] }}; d++) {
+    if (cuda_layer_{{ layer_id - 1 }}_output[b*{{ layer.output_shape[1] }} + d] {% if layer.threshold_is_high %}>={% else %}>{% endif %} {% if layer.threshold is iterable %}layer_{{ layer_id }}_threshold[d]{% else %}{{ layer.threshold }}{% endif %}) {
+      layer_{{ layer_id }}_output[b][d / {{ [layer.output_shape[1], binary_word_size]|min }}] |= ({{ bit }} << ({{ binary_word_size - 1}} - d % {{ [layer.output_shape[1], binary_word_size]|min }}));
+    } else {
+      layer_{{ layer_id }}_output[b][d / {{ [layer.output_shape[1], binary_word_size]|min }}] &= ~({{ bit }} << ({{ binary_word_size - 1}} - d % {{ [layer.output_shape[1], binary_word_size]|min }}));
+    }
+  }
+}
+{% if layer.output_shape[1] % binary_word_size != 0 %}
+for(int b = 0; b < {{batch_size}}; b++){
+  for (int d = {{ layer.output_shape[1] }}; d < {{ (layer.output_shape[1] / binary_word_size)|round(method='ceil')|int * binary_word_size }}; d++) {
+    layer_{{ layer_id }}_output[b][d / {{ [layer.output_shape[1], binary_word_size]|min }}] &= ~({{ bit }} << ({{ binary_word_size - 1}} - d % {{ [layer.output_shape[1], binary_word_size]|min }}));
+  }
+}
+{% endif %}
+
+{{ output_type }} *cuda_layer_{{ layer_id }}_output = ({{ output_type }} *) layer_{{ layer_id }}_output;
+{% endif %}
+
+end = std::chrono::high_resolution_clock::now();
+auto l{{ layer_id }}_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());  
+float l{{ layer_id }}_kernel_time = 0;

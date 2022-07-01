@@ -14,6 +14,9 @@
 # EXTERNAL cache entries
 ########################
 
+//Number of images in a batch
+BATCH_SIZE:STRING=4
+
 //Path to a program.
 CMAKE_ADDR2LINE:FILEPATH=/usr/bin/addr2line
 

@@ -24,6 +24,7 @@ endif()
 
 SET(FEATURE_TYPE "" CACHE STRING "Data type of input features, e.g. int or double")
 SET(LABEL_TYPE "" CACHE STRING "Data type of labels, e.g. int or double")
+SET(BATCH_SIZE "" CACHE STRING "Number of images in a batch")
 
 
 # if (CMAKE_CROSSCOMPILING)
@@ -45,4 +46,4 @@ add_executable(
     testCode main.cpp ${HEADER_FILES} ${SOURCES}
 )
 
-target_compile_definitions(testCode PRIVATE -Dpredict=predict_${MODELNAME} -DFEATURE_TYPE=${FEATURE_TYPE} -DLABEL_TYPE=${LABEL_TYPE})
+target_compile_definitions(testCode PRIVATE -Dpredict=predict_${MODELNAME} -DFEATURE_TYPE=${FEATURE_TYPE} -DLABEL_TYPE=${LABEL_TYPE} -DBATCH_SIZE=${BATCH_SIZE})

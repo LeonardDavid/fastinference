@@ -64,22 +64,25 @@ auto read_csv(std::string &path) {
 }
 
 auto benchmark(std::vector<std::vector<FEATURE_TYPE>> &X, std::vector<unsigned int> &Y, unsigned int repeat) {
-    //double output[N_CLASSES] = {0};
+
 	LABEL_TYPE * output = new LABEL_TYPE[N_CLASSES];
     unsigned int n_features = X[0].size();
-
 	unsigned int matches = 0;
+
 	size_t xsize = X.size();
 	// size_t xsize = 2; // for testing;
-	//unsigned int imgsize = &X[0][0].size();
-	//std::cout<<"imgsize: "<<imgsize<<std::endl;
+
+	const unsigned int imgsize = X[0].size();
+	
+	std::cout<<"Dataset size: "<<X.size()<<std::endl;
+	std::cout<<"Image size: "<<imgsize<<std::endl;
 
     auto start = std::chrono::high_resolution_clock::now();
 
     for (unsigned int k = 0; k < repeat; ++k) {
     	matches = 0;
 		/* using ceil() makes sure to execute even when division is not uniform: */
-		for (unsigned int b = 0; b < ceil(float(xsize))/BATCH_SIZE; b++){
+		for (unsigned int b = 0; b < ceil(float(xsize)/BATCH_SIZE); b++){
 			std::fill(output, output+N_CLASSES, 0);
 			// TODO make label as array for multiple batches
 	        unsigned int label[BATCH_SIZE];
@@ -93,15 +96,30 @@ auto benchmark(std::vector<std::vector<FEATURE_TYPE>> &X, std::vector<unsigned i
 			//int const * const x = &X[i*NUM_FEATURES];
 			
 			// TODO segmentation fault for const ** const x or assignment of read only location
-			FEATURE_TYPE const * const x = {}; // = &X[i][0];
+			FEATURE_TYPE x[BATCH_SIZE][imgsize]; // = &X[i][0];
 			
 			size_t bsize = (b == xsize/BATCH_SIZE) ? (xsize % BATCH_SIZE) : BATCH_SIZE;
 			for(size_t i=0; i<bsize; i++){
-				x[i] = &X[b*BATCH_SIZE + i][0];
+				for(size_t n=0; n<X[b*BATCH_SIZE + i].size(); n++){ // imgsize
+					x[i][n] = X[b*BATCH_SIZE + i][n];
+				}
+				// x[i][0][0] = X[b*BATCH_SIZE + i][0];
 				label[i] = Y[b*BATCH_SIZE + i];
 			}
 
-			predict(x, output);
+			// // display images in batch
+			// for(size_t i=0; i<bsize; i++){
+			// 	for(int n=0; n<imgsize; n++){
+			// 		std::cout<<x[i][n]<<" ";
+			// 		if((n+1)%28==0){
+			// 		std::cout<<std::endl;
+			// 		}
+			// 	}
+			// 	std::cout<<std::endl;
+			// }
+			// std::cout<<std::endl<<std::endl;
+
+			predict(&x[0][0], output);
 
 			// TODO adapt for multiple batches in the matches code:
 			for(size_t i = 0; i < bsize; i++){

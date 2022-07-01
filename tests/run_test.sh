@@ -120,12 +120,12 @@ else
     FEATURE_TYPE="double"
 fi
 
-python3 fastinference/main.py --model $OUTPATH/$MODELNAME.$ENDING --feature_type $FEATURE_TYPE --out_path $OUTPATH --out_name "model" $FIOPTIONS --batch_size $BATCH_SIZE
+python3 fastinference/main.py --model $OUTPATH/$MODELNAME.$ENDING --feature_type $FEATURE_TYPE --out_path $OUTPATH --out_name "model" $FIOPTIONS --implementation.batch_size $BATCH_SIZE
 python3 ./tests/data/convert_data.py --file $OUTPATH/testing.csv --out $OUTPATH/testing.h --dtype $FEATURE_TYPE --ltype "unsigned int"
 
 cp ./tests/main.cpp $OUTPATH
 cp ./tests/CMakeLists.txt $OUTPATH
 cd $OUTPATH
-cmake . -DMODELNAME=$MODELNAME -DFEATURE_TYPE=$FEATURE_TYPE
+cmake . -DMODELNAME=$MODELNAME -DFEATURE_TYPE=$FEATURE_TYPE -DBATCH_SIZE=$BATCH_SIZE
 make
 ./testCode testing.csv 1

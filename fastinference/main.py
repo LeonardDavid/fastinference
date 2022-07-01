@@ -66,7 +66,7 @@ def main():
 
     args, unknown = parser.parse_known_args()
     unknown = parse_unknown(unknown)
-
+    
     loaded_model = Loader.model_from_file(args.model)
 
     optimizer_args = []

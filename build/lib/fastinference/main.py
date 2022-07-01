@@ -61,12 +61,12 @@ def main():
     parser.add_argument('--out_path', required=False, default=".", type=str, help='Folder under which the generated code should be stored.')
     parser.add_argument('--optimize', nargs='+', default=None, help="List of optimizations which are performed on the model before code generation.")
     parser.add_argument('--baseoptimize', nargs='+', default=None, help="List of optimizations which are performed on the base model before code generation.")
-    parser.add_argument('--batch_size', required=False, default=None, help="Batch size of CUDA implementation")
+
     # parser.add_argument('--feature_type', nargs='+', default="double", help="feature type of output")
 
     args, unknown = parser.parse_known_args()
     unknown = parse_unknown(unknown)
-
+    
     loaded_model = Loader.model_from_file(args.model)
 
     optimizer_args = []

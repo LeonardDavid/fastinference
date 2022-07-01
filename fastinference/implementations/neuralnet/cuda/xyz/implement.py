@@ -18,6 +18,7 @@ from fastinference.models.nn.AveragePool import AvgPool2d
 from fastinference.models.nn.Activations import LogSoftmax, LeakyRelu, Relu, Sigmoid, Sign
 
 # TODO ADD unsigned data types
+##
 def simplify_array(array):
     """Try to simplify the data type of an array
 
@@ -102,6 +103,7 @@ def larger_datatype(dtype1, dtype2):
 
 def render(layer, input_type, layer_id = 0, is_first = False, float_type = "double", int_type = "int", uint_type = "unsigned int", infer_types = False, align = 0, popcount = None, batch_size = 1, reshape_layer_id = 0, step_layer_ids = []):
 
+#loop?
     env = Environment(
         loader=FileSystemLoader(os.path.join(os.path.dirname(os.path.abspath(__file__)))),
         trim_blocks=True, lstrip_blocks=True, keep_trailing_newline=True

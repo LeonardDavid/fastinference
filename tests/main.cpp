@@ -5,6 +5,7 @@
 #include <sstream>
 #include <vector>
 #include <tuple>
+#include <cmath>
 #include <assert.h>
 
 #include "model.h"
@@ -12,7 +13,7 @@
 namespace FAST_INFERENCE {}
 using namespace FAST_INFERENCE;
 
-unsigned int BATCH_SIZE = 1;
+// unsigned int BATCH_SIZE = 2;
 
 auto read_csv(std::string &path) {
 	std::vector<std::vector<FEATURE_TYPE>> X;
@@ -63,13 +64,21 @@ auto read_csv(std::string &path) {
 }
 
 auto benchmark(std::vector<std::vector<FEATURE_TYPE>> &X, std::vector<unsigned int> &Y, unsigned int repeat) {
-    //double output[N_CLASSES] = {0};
-	LABEL_TYPE * output = new LABEL_TYPE[N_CLASSES];
-    unsigned int n_features = X[0].size();
 
+	LABEL_TYPE * output = new LABEL_TYPE[N_CLASSES*BATCH_SIZE];
+    unsigned int n_features = X[0].size();
 	unsigned int matches = 0;
+
 	size_t xsize = X.size();
 	// size_t xsize = 2; // for testing;
+
+	const unsigned int imgsize = X[0].size();
+	
+	std::cout<<"Dataset size: "<<xsize<<std::endl;
+	std::cout<<"Image size: "<<imgsize<<std::endl;
+	std::cout<<"Batch size: "<<BATCH_SIZE<<std::endl;
+	std::cout<<"=> Executing "<<xsize<<" images in "<<ceil(float(xsize)/BATCH_SIZE)<<" batches of "<<BATCH_SIZE<<"..."<<std::endl;
+	std::cout<<std::endl;
 
 	float total_kernel_time = 0;
 	// TODO generate these:
@@ -79,10 +88,11 @@ auto benchmark(std::vector<std::vector<FEATURE_TYPE>> &X, std::vector<unsigned i
     auto start = std::chrono::high_resolution_clock::now();
     for (unsigned int k = 0; k < repeat; ++k) {
     	matches = 0;
-	    for (unsigned int i = 0; i < xsize; ++i) {
-	        std::fill(output, output+N_CLASSES, 0);
+	    /* using ceil() makes sure to execute even when division is not uniform: */
+		for (unsigned int b = 0; b < ceil(float(xsize)/BATCH_SIZE); b++){
+	        std::fill(output, output+N_CLASSES*BATCH_SIZE, 0);
 			// TODO make label as array for multiple batches
-	        unsigned int label = Y[i];
+	        unsigned int label[BATCH_SIZE];
 
 	        // Note: To make this code more universially applicable we define predict to be the correct function
 	        //       which is given in the command line argument. For example, a RidgeClassifier is compiled with
@@ -92,18 +102,36 @@ auto benchmark(std::vector<std::vector<FEATURE_TYPE>> &X, std::vector<unsigned i
 	        //          target_compile_definitions(testCode PRIVATE -Dpredict=predict_${MODELNAME})
 			//int const * const x = &X[i*NUM_FEATURES];
 
-			FEATURE_TYPE const * const x = &X[i][0];
+			// FEATURE_TYPE const * const x = &X[i][0];
+			FEATURE_TYPE x[BATCH_SIZE][imgsize];
+
+			size_t BSIZE = (b == xsize/BATCH_SIZE) ? (xsize % BATCH_SIZE) : BATCH_SIZE;
+			for(size_t i=0; i<BSIZE; i++){
+				for(size_t n=0; n<X[b*BSIZE + i].size(); n++){ // imgsize
+					x[i][n] = X[b*BSIZE + i][n];
+				}
+				// x[i][0][0] = X[b*BSIZE + i][0];
+				label[i] = Y[b*BSIZE + i];
+			}
 			
 			// TODO: generate these:
 			float kernel_time, l1t, l2t, l3t, l4t, l5t, l6t, l7t, l8t, l9t, l10t, l11t, l1kt, l2kt, l3kt, l4kt, l5kt, l6kt, l7kt, l8kt, l9kt, l10kt, l11kt;
-			std::tie(kernel_time, l1t, l2t, l3t, l4t, l5t, l6t, l7t, l8t, l9t, l10t, l11t, l1kt, l2kt, l3kt, l4kt, l5kt, l6kt, l7kt, l8kt, l9kt, l10kt, l11kt) = predict(x, output);
+			std::tie(kernel_time, l1t, l2t, l3t, l4t, l5t, l6t, l7t, l8t, l9t, l10t, l11t, l1kt, l2kt, l3kt, l4kt, l5kt, l6kt, l7kt, l8kt, l9kt, l10kt, l11kt) = predict(&x[0][0], output);
 			total_kernel_time += kernel_time;
 			l1_time += l1t, l2_time += l2t, l3_time += l3t, l4_time += l4t, l5_time += l5t, l6_time += l6t, l7_time += l7t, l8_time += l8t, l9_time += l9t, l10_time += l10t, l11_time += l11t;
 			l1_kernel_time += l1kt, l2_kernel_time += l2kt, l3_kernel_time += l3kt, l4_kernel_time += l4kt, l5_kernel_time += l5kt, l6_kernel_time += l6kt, l7_kernel_time += l7kt, l8_kernel_time += l8kt, l9_kernel_time += l9kt, l10_kernel_time += l10kt, l11_kernel_time += l11kt;
 
+			// for(int b = 0; b<BSIZE; b++){
+			// 	for (int i=0;i<10;i++){
+			// 		std::cout<<output[b*10+i]<<" ";
+			// 	}
+			// 	std::cout<<std::endl;
+			// }
+			// std::cout<<std::endl;
+
 			// TODO adapt for multiple batches in the matches code:
 			if constexpr (N_CLASSES >= 2) {
-				for(unsigned int b = 0; b < BATCH_SIZE; b++){
+				for(unsigned int b = 0; b < BSIZE; b++){
 					LABEL_TYPE max = output[b*N_CLASSES];
 					unsigned int argmax = 0;
 					for (unsigned int j = 1; j < N_CLASSES; j++) {
@@ -112,13 +140,14 @@ auto benchmark(std::vector<std::vector<FEATURE_TYPE>> &X, std::vector<unsigned i
 							argmax = j;
 						}
 					}
-					if (argmax == label) {
-						// std::cout<<"image: "<<i<<" | "<<"label: "<<label<<", argmax: "<<argmax<<std::endl;
+					// std::cout<<"ximage: "<<b<<" | "<<"label: "<<label[b]<<", argmax: "<<argmax<<std::endl;
+					if (argmax == label[b]) {
+						// std::cout<<"image: "<<b<<" | "<<"label: "<<label[b]<<", argmax: "<<argmax<<std::endl;
 						++matches;
 					}
 				}
 			} else {
-				if ( (output[0] < 0 && label == 0) || (output[0] >= 0 && label == 1) ) {
+				if ( (output[0] < 0 && label[b] == 0) || (output[0] >= 0 && label[b] == 1) ) {
 					++matches;
 				}
 			} 
@@ -136,7 +165,7 @@ auto benchmark(std::vector<std::vector<FEATURE_TYPE>> &X, std::vector<unsigned i
 	auto kernel_time = static_cast<float>(total_kernel_time) / xsize;
 
 	float accuracy = static_cast<float>(matches) / X.size() * 100.f;
-    //return std::make_pair(accuracy, runtime);
+    printf("Matches: %d/10000\n", matches);
 
 	// TODO generate these:
 	return std::make_tuple(accuracy, total_cpu_time, cpu_time, total_kernel_time, kernel_time,

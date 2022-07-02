@@ -95,12 +95,12 @@ float layer{{layer_id}}_gpu_cuda({{input_type}} * cuda_layer_{{layer_id-1}}_outp
 
     // allocate GPU device buffers
     // Note: batch_size included in input and output shapes
-    cudaMalloc((void **) &d_cuda_layer_{{layer_id-1}}_output, {{ input_shape|join('*') }}*sizeof({{input_type}})); // dim of cuda_layer_{{layer_id-1}}_output
-    cudaMalloc((void **) &d_cuda_layer_{{layer_id}}_output, {{ output_shape|join('*') }}*sizeof({{output_type}})); // dim of layer_{{layer_id}}_output
+    cudaMalloc((void **) &d_cuda_layer_{{layer_id-1}}_output, {{batch_size}}*{{ input_shape|join('*') }}*sizeof({{input_type}})); // dim of cuda_layer_{{layer_id-1}}_output
+    cudaMalloc((void **) &d_cuda_layer_{{layer_id}}_output, {{batch_size}}*{{ output_shape|join('*') }}*sizeof({{output_type}})); // dim of layer_{{layer_id}}_output
     cudaCheckErrors("Failed to allocate device buffer");
 
     // copy input data from host on device
-    cudaMemcpy(d_cuda_layer_{{layer_id-1}}_output, cuda_layer_{{layer_id-1}}_output, ({{ input_shape|join('*') }}*sizeof({{input_type}})), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_cuda_layer_{{layer_id-1}}_output, cuda_layer_{{layer_id-1}}_output, ({{batch_size}}*{{ input_shape|join('*') }}*sizeof({{input_type}})), cudaMemcpyHostToDevice);
 
     // define thread and block sizes
     const int BLKXSIZE = {{output_shape[2]}};
@@ -131,7 +131,7 @@ float layer{{layer_id}}_gpu_cuda({{input_type}} * cuda_layer_{{layer_id-1}}_outp
     cudaEventElapsedTime(&milliseconds, start, stop);
 
     // copy result from device to host
-    cudaMemcpy(cuda_layer_{{layer_id}}_output, d_cuda_layer_{{layer_id}}_output, ({{ output_shape|join('*') }}*sizeof({{output_type}})), cudaMemcpyDeviceToHost);
+    cudaMemcpy(cuda_layer_{{layer_id}}_output, d_cuda_layer_{{layer_id}}_output, ({{batch_size}}*{{ output_shape|join('*') }}*sizeof({{output_type}})), cudaMemcpyDeviceToHost);
     cudaCheckErrors("CUDA memcpy failure");
 
     // free the memory

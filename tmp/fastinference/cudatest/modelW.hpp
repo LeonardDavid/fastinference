@@ -1,29 +1,29 @@
-static int cuda_layer_2_output[4*26*26*32];
-static int layer_2_output[4][26][26][32];
+static int cuda_layer_2_output[2*26*26*32];
+static int layer_2_output[2][26][26][32];
 
-static unsigned int cuda_layer_3_output[4*26*26*1*32];
-static unsigned int layer_3_output[4][26][26][1];
+static unsigned int cuda_layer_3_output[2*26*26*1*32];
+static unsigned int layer_3_output[2][26][26][1];
 
-static unsigned int cuda_layer_4_output[4*13*13*1*32];
-static unsigned int layer_4_output[4][13][13][1];
+static unsigned int cuda_layer_4_output[2*13*13*1*32];
+static unsigned int layer_4_output[2][13][13][1];
 
-static signed int cuda_layer_5_output[4*11*11*32];
-static signed int layer_5_output[4][11][11][32];
+static signed int cuda_layer_5_output[2*11*11*32];
+static signed int layer_5_output[2][11][11][32];
 
-static unsigned int cuda_layer_6_output[4*11*11*1*32];
-static unsigned int layer_6_output[4][11][11][1];
+static unsigned int cuda_layer_6_output[2*11*11*1*32];
+static unsigned int layer_6_output[2][11][11][1];
 
-static unsigned int cuda_layer_7_output[4*5*5*1*32];
-static unsigned int layer_7_output[4][5][5][1];
+static unsigned int cuda_layer_7_output[2*5*5*1*32];
+static unsigned int layer_7_output[2][5][5][1];
 
-static signed int cuda_layer_9_output[4*32];
-static signed int layer_9_output[4][32];
+static signed int cuda_layer_9_output[2*32];
+static signed int layer_9_output[2][32];
 
-static unsigned int cuda_layer_10_output[4*1*32];
-static unsigned int layer_10_output[4][1];
+static unsigned int cuda_layer_10_output[2*1*32];
+static unsigned int layer_10_output[2][1];
 
-static signed int cuda_layer_11_output[4*10];
-static signed int layer_11_output[4][10];
+static signed int cuda_layer_11_output[2*10];
+static signed int layer_11_output[2][10];
 
 
 static constexpr signed char layer_2_weight[3][3][1][32] = {{{{-1, -1, 1, 1, 1, 1, 1, -1, 1, -1, -1, 1, -1, 1, -1, 1, -1, -1, 1, -1, -1, 1, 1, -1, 1, -1, 1, 1, 1, 1, -1, 1}}, {{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, -1, -1, -1, -1, -1, -1, 1, -1, 1, -1, -1, 1, 1, 1, -1, 1, -1, -1}}, {{1, -1, -1, 1, -1, 1, -1, -1, -1, -1, 1, 1, -1, 1, -1, 1, -1, -1, -1, 1, 1, -1, 1, 1, -1, 1, 1, -1, 1, 1, -1, 1}}}, {{{1, -1, 1, 1, 1, -1, -1, -1, -1, 1, 1, 1, -1, 1, -1, -1, -1, 1, 1, -1, -1, 1, 1, -1, 1, 1, 1, 1, 1, -1, -1, 1}}, {{1, 1, -1, -1, -1, 1, -1, 1, -1, -1, -1, -1, 1, -1, 1, 1, 1, 1, 1, -1, 1, 1, 1, -1, 1, -1, 1, 1, -1, -1, 1, -1}}, {{1, 1, 1, 1, 1, 1, -1, -1, -1, 1, -1, 1, -1, -1, 1, -1, 1, -1, 1, 1, -1, 1, -1, -1, 1, -1, -1, -1, 1, -1, -1, 1}}}, {{{-1, -1, -1, 1, 1, 1, 1, -1, -1, -1, -1, 1, -1, 1, 1, 1, 1, 1, 1, 1, 1, -1, -1, 1, 1, 1, -1, 1, 1, 1, 1, -1}}, {{-1, 1, 1, 1, 1, -1, 1, -1, -1, -1, -1, -1, -1, -1, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, 1, 1, -1, -1, -1}}, {{1, -1, -1, -1, -1, -1, 1, -1, 1, -1, -1, 1, 1, -1, -1, 1, -1, 1, -1, 1, -1, -1, -1, 1, -1, -1, -1, 1, 1, -1, 1, 1}}}};

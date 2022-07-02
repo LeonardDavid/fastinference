@@ -35,7 +35,7 @@ predict_cudatest(int const * const x, int * pred) {
 
     // // Layer 2: regular_conv2d
     // auto start = std::chrono::high_resolution_clock::now();
-    // // for(int b = 0; b < 4; b++){
+    // // for(int b = 0; b < 2; b++){
     // 	for (int h = 0; h < 26; h++) {
     // 		for (int w = 0; w < 26; w++) {
     // 			for (int m = 0; m < 32; m++) {
@@ -62,7 +62,7 @@ predict_cudatest(int const * const x, int * pred) {
 
     // // checksum L2 = 
     // ofstream g2("outputs/layer2/orig.out");
-    // for(int b = 0; b < 4; b++){
+    // for(int b = 0; b < 2; b++){
     //   sum_cpu = 0;
     //   for (int h = 0; h < 26; h++) {// 
     //     for (int w = 0; w < 26; w++) {
@@ -86,7 +86,7 @@ predict_cudatest(int const * const x, int * pred) {
 
     // // checksum L2 = 
     // ofstream gg2("outputs/layer2/par.out");
-    // for(int b = 0; b < 4; b++){
+    // for(int b = 0; b < 2; b++){
     //   sum_gpu = 0;
     //   for(int i=b*26*26*32;i<(b+1)*26*26*32;i++){
     //     sum_gpu += cuda_layer_2_output[i];
@@ -98,7 +98,7 @@ predict_cudatest(int const * const x, int * pred) {
 
     // Layer 3: Step
     start = std::chrono::high_resolution_clock::now();
-    for(int b = 0; b < 4; b++){
+    for(int b = 0; b < 2; b++){
       for (int h = 0; h < 26; h++) {
         for (int w = 0; w < 26; w++) {
           for (int c = 0; c < 32; c++) {
@@ -115,7 +115,7 @@ predict_cudatest(int const * const x, int * pred) {
     }
 
     // needed for GPU, but on CPU layers work with the normal layer_x_output from step
-    for(int b = 0; b < 4; b++){
+    for(int b = 0; b < 2; b++){
       for (int h = 0; h < 26; h++) {
         for (int w = 0; w < 26; w++) {
           for (int c = 0; c < 1; c++) {
@@ -131,7 +131,7 @@ predict_cudatest(int const * const x, int * pred) {
 
     // // Layer 4: MaxPool
     // start = std::chrono::high_resolution_clock::now();
-    // // for(int b = 0; b < 4; b++){
+    // // for(int b = 0; b < 2; b++){
     //   for (int h = 0; h < 13; h++) {
     //     for (int w = 0; w < 13; w++) {
     //       for (int c = 0; c < 1; c++) {
@@ -153,7 +153,7 @@ predict_cudatest(int const * const x, int * pred) {
      
     // // checksum L4 = 
     // ofstream g4("outputs/layer4/orig.out");
-    // for(int b = 0; b < 4; b++){
+    // for(int b = 0; b < 2; b++){
     //   sum_cpu = 0;
     //   for (int h = 0; h < 13; h++) {
     //     for (int w = 0; w < 13; w++) {
@@ -179,7 +179,7 @@ predict_cudatest(int const * const x, int * pred) {
 
     // // checksum L4 = 
     // ofstream gg4("outputs/layer4/par.out");
-    // for(int b = 0; b < 4; b++){
+    // for(int b = 0; b < 2; b++){
     //   sum_gpu = 0;
     //   //   for(int i=b*13*13*1;i<(b+1)*13*13*1;i++)
     //   //   {
@@ -192,7 +192,7 @@ predict_cudatest(int const * const x, int * pred) {
 
     // // Layer 5: conv2d
     // start = std::chrono::high_resolution_clock::now();
-    // // for(int b = 0; b < 4; b++){
+    // // for(int b = 0; b < 2; b++){
     //   for (int h = 0; h < 11; h++) {
     //     for (int w = 0; w < 11; w++) {
     //       for (int m = 0; m < 32; m++) {
@@ -216,7 +216,7 @@ predict_cudatest(int const * const x, int * pred) {
     // 
     // // checksum L5 = 
     // ofstream g5("outputs/layer5/orig.out");
-    // for(int b = 0; b < 4; b++){
+    // for(int b = 0; b < 2; b++){
     //   sum_cpu = 0;
     //   for (int h = 0; h < 11; h++) {// 
     //     for (int w = 0; w < 11; w++) {
@@ -241,7 +241,7 @@ predict_cudatest(int const * const x, int * pred) {
 
     // // checksum L5 = 
     // ofstream gg5("outputs/layer5/par.out");
-    // for(int b = 0; b < 4; b++){
+    // for(int b = 0; b < 2; b++){
     //   sum_gpu = 0;
     //   for(int i=b*11*11*32;i<(b+1)*11*11*32;i++){
     //     sum_gpu += cuda_layer_5_output[i];
@@ -253,7 +253,7 @@ predict_cudatest(int const * const x, int * pred) {
 
     // Layer 6: Step
     start = std::chrono::high_resolution_clock::now();
-    for(int b = 0; b < 4; b++){
+    for(int b = 0; b < 2; b++){
       for (int h = 0; h < 11; h++) {
         for (int w = 0; w < 11; w++) {
           for (int c = 0; c < 32; c++) {
@@ -270,7 +270,7 @@ predict_cudatest(int const * const x, int * pred) {
     }
 
     // needed for GPU, but on CPU layers work with the normal layer_x_output from step
-    for(int b = 0; b < 4; b++){
+    for(int b = 0; b < 2; b++){
       for (int h = 0; h < 11; h++) {
         for (int w = 0; w < 11; w++) {
           for (int c = 0; c < 1; c++) {
@@ -286,7 +286,7 @@ predict_cudatest(int const * const x, int * pred) {
 
     // // Layer 7: MaxPool
     // start = std::chrono::high_resolution_clock::now();
-    // // for(int b = 0; b < 4; b++){
+    // // for(int b = 0; b < 2; b++){
     //   for (int h = 0; h < 5; h++) {
     //     for (int w = 0; w < 5; w++) {
     //       for (int c = 0; c < 1; c++) {
@@ -308,7 +308,7 @@ predict_cudatest(int const * const x, int * pred) {
      
     // // checksum L7 = 
     // ofstream g7("outputs/layer7/orig.out");
-    // for(int b = 0; b < 4; b++){
+    // for(int b = 0; b < 2; b++){
     //   sum_cpu = 0;
     //   for (int h = 0; h < 5; h++) {
     //     for (int w = 0; w < 5; w++) {
@@ -334,7 +334,7 @@ predict_cudatest(int const * const x, int * pred) {
 
     // // checksum L7 = 
     // ofstream gg7("outputs/layer7/par.out");
-    // for(int b = 0; b < 4; b++){
+    // for(int b = 0; b < 2; b++){
     //   sum_gpu = 0;
     //   //   for(int i=b*5*5*1;i<(b+1)*5*5*1;i++)
     //   //   {
@@ -355,7 +355,7 @@ predict_cudatest(int const * const x, int * pred) {
 
     // // Layer 9: Gemm
     // start = std::chrono::high_resolution_clock::now();
-    //  // for(int b = 0; b < 4; b++){
+    //  // for(int b = 0; b < 2; b++){
     //   for (int d = 0; d < 32; d++) {
     //     cuda_layer_9_output[b*32 + d] = layer_9_bias[d];
     //   }
@@ -371,7 +371,7 @@ predict_cudatest(int const * const x, int * pred) {
     // 
     // // checksum L9 
     // ofstream g9("outputs/layer9/orig.out");
-    // for(int b = 0; b < 4; b++){
+    // for(int b = 0; b < 2; b++){
     //   sum_cpu = 0;
     //   for (int d = 0; d < 32; d++) {
     //     sum_cpu += cuda_layer_9_output[b*32 + d];
@@ -392,7 +392,7 @@ predict_cudatest(int const * const x, int * pred) {
 
     // // checksum L9
     // ofstream gg9("outputs/layer9/par.out");
-    // for(int b = 0; b < 4; b++){
+    // for(int b = 0; b < 2; b++){
     //   sum_gpu = 0;
     //   for(int i=b*32;i<(b+1)*32;i++){
     //     sum_gpu += cuda_layer_9_output[i];
@@ -404,7 +404,7 @@ predict_cudatest(int const * const x, int * pred) {
 
     // Layer 10: Step
     start = std::chrono::high_resolution_clock::now();
-    for(int b = 0; b < 4; b++){
+    for(int b = 0; b < 2; b++){
       for (int d = 0; d < 32; d++) {
         if (cuda_layer_9_output[b*32 + d] >= layer_10_threshold[d]) {
           layer_10_output[b][d / 32] |= (1U << (31 - d % 32));
@@ -422,7 +422,7 @@ predict_cudatest(int const * const x, int * pred) {
 
     // // Layer 11: Gemm
     // start = std::chrono::high_resolution_clock::now();
-    // // for(int b = 0; b < 4; b++){
+    // // for(int b = 0; b < 2; b++){
     //   for (int d = 0; d < 10; d++) {
     //     cuda_layer_11_output[b*10 + d] = layer_11_bias[d];
     //   }
@@ -438,7 +438,7 @@ predict_cudatest(int const * const x, int * pred) {
     // 
     // // checksum L11 
     // ofstream g11("outputs/layer11/orig.out");
-    // for(int b = 0; b < 4; b++){
+    // for(int b = 0; b < 2; b++){
     //   sum_cpu = 0;
     //   for (int d = 0; d < 10; d++) {
     //     sum_cpu += cuda_layer_11_output[b*10 + d];
@@ -459,7 +459,7 @@ predict_cudatest(int const * const x, int * pred) {
 
     // // checksum L11
     // ofstream gg11("outputs/layer11/par.out");
-    // for(int b = 0; b < 4; b++){
+    // for(int b = 0; b < 2; b++){
     //   sum_gpu = 0;
     //   for(int i=b*10;i<(b+1)*10;i++){
     //     sum_gpu += cuda_layer_11_output[i];
@@ -470,7 +470,7 @@ predict_cudatest(int const * const x, int * pred) {
     // cout<<endl;
 
 
-    for(int b = 0; b < 4; b++){
+    for(int b = 0; b < 2; b++){
       for (int i = 0; i < 10; i++) {
         pred[b*10 + i] += cuda_layer_11_output[b*10 + i];
       }

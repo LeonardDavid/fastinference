@@ -1,0 +1,43 @@
+#include <math.h>
+#include <stdint.h>
+#include <limits>
+#include <algorithm>
+#include <cstdint>
+#include <fstream>
+#include <iostream>
+#include <chrono>
+
+#include "utils.h"
+#include "{{out_name}}W.hpp"
+#include "cuda_{{out_name}}.h"
+
+using namespace std;
+
+namespace {{namespace}} {
+
+std::tuple<float,
+{%- for i in range(out_layer_id) -%}
+float,
+{%- endfor -%}
+{%- for i in range(out_layer_id) -%}
+float{%- if i != out_layer_id-1 -%},{%- endif -%}
+{%- endfor -%}
+>
+//void
+predict_{{name}}({{ feature_type }} const * const x, {{ label_type }} * pred) {
+    auto layer_{{ in_layer_id }}_output = x;
+
+    float kernel_time = 0;
+    float sum_cpu = 0, sum_gpu = 0;
+	  {{ code_predict|indent(4) }}
+
+    for(int b = 0; b < {{batch_size}}; b++){
+      for (int i = 0; i < {{ n_classes }}; i++) {
+        pred[b*{{n_classes}} + i] += {% if weight != 1.0 %}{{ weight }} * {% endif %}cuda_layer_{{ out_layer_id }}_output[b*{{ n_classes }} + i];
+      }
+    }
+
+    return std::make_tuple(kernel_time, {% for i in range(out_layer_id) %}l{{ i+1 }}_time, {% endfor %}{% for i in range(out_layer_id) %}l{{ i+1 }}_kernel_time{% if i+1 != out_layer_id %}, {% endif %}{% endfor %});
+}
+
+}

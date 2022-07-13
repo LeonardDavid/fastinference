@@ -15,7 +15,7 @@
 ########################
 
 //Number of images in a batch
-BATCH_SIZE:STRING=2
+BATCH_SIZE:STRING=4
 
 //Path to a program.
 CMAKE_ADDR2LINE:FILEPATH=/usr/bin/addr2line
@@ -234,7 +234,7 @@ CMAKE_VERBOSE_MAKEFILE:BOOL=FALSE
 FEATURE_TYPE:STRING=int
 
 //Implementation used
-IMPL:STRING="xyz"
+IMPL:STRING="cpu"
 
 //Data type of labels, e.g. int or double
 LABEL_TYPE:STRING=int

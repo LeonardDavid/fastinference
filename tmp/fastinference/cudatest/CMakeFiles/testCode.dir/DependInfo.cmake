@@ -11,9 +11,9 @@ set(CMAKE_CUDA_COMPILER_ID "NVIDIA")
 
 # Preprocessor definitions for this target.
 set(CMAKE_TARGET_DEFINITIONS_CUDA
-  "BATCH_SIZE=2"
+  "BATCH_SIZE=4"
   "FEATURE_TYPE=int"
-  "IMPL=\"xyz\""
+  "IMPL=\"cpu\""
   "LABEL_TYPE=int"
   "predict=predict_cudatest"
   )
@@ -29,9 +29,9 @@ set(CMAKE_CXX_COMPILER_ID "GNU")
 
 # Preprocessor definitions for this target.
 set(CMAKE_TARGET_DEFINITIONS_CXX
-  "BATCH_SIZE=2"
+  "BATCH_SIZE=4"
   "FEATURE_TYPE=int"
-  "IMPL=\"xyz\""
+  "IMPL=\"cpu\""
   "LABEL_TYPE=int"
   "predict=predict_cudatest"
   )

@@ -78,11 +78,11 @@ predict_cudatest(int const * const x, int * pred) {
 
     /* Layer 2 GPU */
     auto start = std::chrono::high_resolution_clock::now();
-    kernel_time += layer2_gpu(cuda_layer_1_output, cuda_layer_2_output);
+    float l2_kernel_time = layer2_gpu(cuda_layer_1_output, cuda_layer_2_output);
     auto end = std::chrono::high_resolution_clock::now();
     auto l2_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());
-    float l2_kernel_time = kernel_time;
     l2_time -= l2_kernel_time*1000000.0f; // ms->ns
+    kernel_time += l2_kernel_time;
 
     // // checksum L2 = 
     // ofstream gg2("outputs/layer2/par.out");
@@ -170,12 +170,11 @@ predict_cudatest(int const * const x, int * pred) {
 
     /* Layer 4 GPU */ 
     start = std::chrono::high_resolution_clock::now();
-    kernel_time += layer4_gpu(cuda_layer_3_output, cuda_layer_4_output);
+    float l4_kernel_time = layer4_gpu(cuda_layer_3_output, cuda_layer_4_output);
     end = std::chrono::high_resolution_clock::now();  
     auto l4_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());
-    //TODO for loop at the end? float l4_kernel_time = kernel_time-l1_kernel_time-...;
-    // l4_time -= l4_kernel_time*1000000.0f; // ms->ns
-    float l4_kernel_time = 0;
+    l4_time -= l4_kernel_time*1000000.0f; // ms->ns
+    kernel_time += l4_kernel_time;
 
     // // checksum L4 = 
     // ofstream gg4("outputs/layer4/par.out");
@@ -232,12 +231,11 @@ predict_cudatest(int const * const x, int * pred) {
 
     /* Layer 5 GPU */ 
     start = std::chrono::high_resolution_clock::now();
-    kernel_time += layer5_gpu(cuda_layer_4_output, cuda_layer_5_output);
+    float l5_kernel_time = layer5_gpu(cuda_layer_4_output, cuda_layer_5_output);
     end = std::chrono::high_resolution_clock::now();  
     auto l5_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());
-    //TODO for loop at the end? float l5_kernel_time = kernel_time-l1_kernel_time-...;
-    //l5_time -= l5_kernel_time*1000000.0f; // ms->ns
-    float l5_kernel_time = 0;
+    l5_time -= l5_kernel_time*1000000.0f; // ms->ns
+    kernel_time += l5_kernel_time;
 
     // // checksum L5 = 
     // ofstream gg5("outputs/layer5/par.out");
@@ -325,12 +323,11 @@ predict_cudatest(int const * const x, int * pred) {
 
     /* Layer 7 GPU */ 
     start = std::chrono::high_resolution_clock::now();
-    kernel_time += layer7_gpu(cuda_layer_6_output, cuda_layer_7_output);
+    float l7_kernel_time = layer7_gpu(cuda_layer_6_output, cuda_layer_7_output);
     end = std::chrono::high_resolution_clock::now();  
     auto l7_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());
-    //TODO for loop at the end? float l7_kernel_time = kernel_time-l1_kernel_time-...;
-    // l7_time -= l7_kernel_time*1000000.0f; // ms->ns
-    float l7_kernel_time = 0;
+    l7_time -= l7_kernel_time*1000000.0f; // ms->ns
+    kernel_time += l7_kernel_time;
 
     // // checksum L7 = 
     // ofstream gg7("outputs/layer7/par.out");
@@ -383,12 +380,11 @@ predict_cudatest(int const * const x, int * pred) {
 
     /* Layer 9 GPU */ 
     start = std::chrono::high_resolution_clock::now();
-    kernel_time += layer9_gpu(cuda_layer_8_output, cuda_layer_9_output);
+    float l9_kernel_time = layer9_gpu(cuda_layer_8_output, cuda_layer_9_output);
     end = std::chrono::high_resolution_clock::now();  
     auto l9_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());
-    //TODO for loop at the end? float l9_kernel_time = kernel_time-l1_kernel_time-...;
-    //l9_time -= l9_kernel_time*1000000.0f; // ms->n
-    float l9_kernel_time = 0;
+    l9_time -= l9_kernel_time*1000000.0f; // ms->ns
+    kernel_time += l9_kernel_time;
 
     // // checksum L9
     // ofstream gg9("outputs/layer9/par.out");
@@ -450,12 +446,11 @@ predict_cudatest(int const * const x, int * pred) {
 
     /* Layer 11 GPU */ 
     start = std::chrono::high_resolution_clock::now();
-    kernel_time += layer11_gpu(cuda_layer_10_output, cuda_layer_11_output);
+    float l11_kernel_time = layer11_gpu(cuda_layer_10_output, cuda_layer_11_output);
     end = std::chrono::high_resolution_clock::now();  
     auto l11_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());
-    //TODO for loop at the end? float l11_kernel_time = kernel_time-l1_kernel_time-...;
-    //l11_time -= l11_kernel_time*1000000.0f; // ms->n
-    float l11_kernel_time = 0;
+    l11_time -= l11_kernel_time*1000000.0f; // ms->ns
+    kernel_time += l11_kernel_time;
 
     // // checksum L11
     // ofstream gg11("outputs/layer11/par.out");

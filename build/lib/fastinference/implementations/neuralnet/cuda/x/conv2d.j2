@@ -79,12 +79,11 @@
 
 /* Layer {{ layer_id }} GPU */ 
 start = std::chrono::high_resolution_clock::now();
-kernel_time += layer{{ layer_id }}_gpu(cuda_layer_{{ layer_id-1 }}_output, cuda_layer_{{ layer_id }}_output);
+float l{{ layer_id }}_kernel_time = layer{{ layer_id }}_gpu(cuda_layer_{{ layer_id-1 }}_output, cuda_layer_{{ layer_id }}_output);
 end = std::chrono::high_resolution_clock::now();  
 auto l{{ layer_id }}_time = static_cast<float>(std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());
-//TODO for loop at the end? float l{{ layer_id }}_kernel_time = kernel_time-l1_kernel_time-...;
-//l{{ layer_id }}_time -= l{{ layer_id }}_kernel_time*1000000.0f; // ms->ns
-float l{{ layer_id }}_kernel_time = 0;
+l{{ layer_id }}_time -= l{{ layer_id }}_kernel_time*1000000.0f; // ms->ns
+kernel_time += l{{ layer_id }}_kernel_time;
 
 // // checksum L{{ layer_id }} = 
 // ofstream gg{{ layer_id }}("outputs/layer{{ layer_id }}/par.out");

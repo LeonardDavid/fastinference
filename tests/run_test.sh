@@ -49,6 +49,7 @@ case $i in
     ;;
     --implementation=*)
     FIOPTIONS="${FIOPTIONS} --implementation ${i#*=}"
+    IMPLEM="${i#*=}"
     shift # past argument=value
     ;;
     --baseimplementation=*)
@@ -123,9 +124,13 @@ fi
 python3 fastinference/main.py --model $OUTPATH/$MODELNAME.$ENDING --feature_type $FEATURE_TYPE --out_path $OUTPATH --out_name "model" $FIOPTIONS --implementation.batch_size $BATCH_SIZE
 python3 ./tests/data/convert_data.py --file $OUTPATH/testing.csv --out $OUTPATH/testing.h --dtype $FEATURE_TYPE --ltype "unsigned int"
 
+IMPLE=(${IMPLEM//./ })
+Q="\""
+IMPL="$Q${IMPLE[1]}$Q" # echoes "xyz" in order to send it as string to CMake -> c++ code
+
 cp ./tests/main.cpp $OUTPATH
 cp ./tests/CMakeLists.txt $OUTPATH
 cd $OUTPATH
-cmake . -DMODELNAME=$MODELNAME -DFEATURE_TYPE=$FEATURE_TYPE -DBATCH_SIZE=$BATCH_SIZE
+cmake . -DMODELNAME=$MODELNAME -DFEATURE_TYPE=$FEATURE_TYPE -DBATCH_SIZE=$BATCH_SIZE -DIMPL=${IMPL}
 make
 ./testCode testing.csv 1

@@ -3,13 +3,13 @@
 
 # compile CUDA with /usr/local/cuda-11.4/bin/nvcc
 # compile CXX with /usr/bin/c++
-CUDA_DEFINES = -DBATCH_SIZE=4 -DFEATURE_TYPE=int -DIMPL=\"cpu\" -DLABEL_TYPE=int -Dpredict=predict_cudatest
+CUDA_DEFINES = -DBATCH_SIZE=64 -DFEATURE_TYPE=int -DIMPL=\"xyz\" -DLABEL_TYPE=int -Dpredict=predict_cudatest
 
 CUDA_INCLUDES = 
 
 CUDA_FLAGS = -std=c++17
 
-CXX_DEFINES = -DBATCH_SIZE=4 -DFEATURE_TYPE=int -DIMPL=\"cpu\" -DLABEL_TYPE=int -Dpredict=predict_cudatest
+CXX_DEFINES = -DBATCH_SIZE=64 -DFEATURE_TYPE=int -DIMPL=\"xyz\" -DLABEL_TYPE=int -Dpredict=predict_cudatest
 
 CXX_INCLUDES = 
 

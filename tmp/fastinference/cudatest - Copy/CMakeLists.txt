@@ -1,8 +1,9 @@
 cmake_minimum_required(VERSION 3.0)
-project(TestCode) 
+project(TestCode LANGUAGES C CXX CUDA) 
+enable_language(CUDA)
 
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-long-long -pedantic -Wno-unused-variable -Ofast")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-long-long -pedantic -Wno-unused-variable -Ofast -Wno-format")
 
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")  
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} ")
@@ -23,6 +24,8 @@ endif()
 
 SET(FEATURE_TYPE "" CACHE STRING "Data type of input features, e.g. int or double")
 SET(LABEL_TYPE "" CACHE STRING "Data type of labels, e.g. int or double")
+SET(BATCH_SIZE "" CACHE STRING "Number of images in a batch")
+SET(IMPL "" CACHE STRING "Implementation used")
 
 
 # if (CMAKE_CROSSCOMPILING)
@@ -31,10 +34,17 @@ SET(LABEL_TYPE "" CACHE STRING "Data type of labels, e.g. int or double")
 #     set(CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS "--specs=nosys.specs")
 # endif()
 
-file(GLOB SRC_CPP
-    "*.cpp"
+# file(GLOB SRC_CPP
+#     "*.cpp"
+# )
+
+# add_executable(testCode main.cpp ${SRC_CPP})
+
+set(HEADER_FILES model.h modelW.hpp cuda_kernel.h cuda_model.h)
+set(SOURCES model.cpp model.cu)
+
+add_executable(
+    testCode main.cpp ${HEADER_FILES} ${SOURCES}
 )
 
-add_executable(testCode main.cpp ${SRC_CPP})
-
-target_compile_definitions(testCode PRIVATE -Dpredict=predict_${MODELNAME} -DFEATURE_TYPE=${FEATURE_TYPE} -DLABEL_TYPE=${LABEL_TYPE})
+target_compile_definitions(testCode PRIVATE -Dpredict=predict_${MODELNAME} -DFEATURE_TYPE=${FEATURE_TYPE} -DLABEL_TYPE=${LABEL_TYPE} -DBATCH_SIZE=${BATCH_SIZE} -DIMPL=${IMPL})

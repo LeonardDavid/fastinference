@@ -9,6 +9,7 @@ CMakeFiles/testCode.dir/model.cu.o: utils.h
 
 CMakeFiles/testCode.dir/main.cpp.o: main.cpp
 CMakeFiles/testCode.dir/main.cpp.o: model.h
+CMakeFiles/testCode.dir/main.cpp.o: testing.h
 
 CMakeFiles/testCode.dir/model.cpp.o: cuda_kernel.h
 CMakeFiles/testCode.dir/model.cpp.o: cuda_model.h

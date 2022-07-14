@@ -9,6 +9,7 @@
 #include <assert.h>
 #include <filesystem>
 
+#include "testing.h"
 #include "model.h"
 
 namespace FAST_INFERENCE {}
@@ -26,10 +27,12 @@ auto read_csv(std::string &path) {
 	// }
 	std::string header;
 	std::getline(file, header);
+	std::cout<<path<<std::endl;
 
 	unsigned int label_pos = 0;
 	std::stringstream ss(header);
 	std::string entry;
+	
 	while (std::getline(ss, entry, ',')) {
 		if (entry == "label") {
 			break;
@@ -114,17 +117,17 @@ auto benchmark(std::vector<std::vector<FEATURE_TYPE>> &X, std::vector<unsigned i
 			FEATURE_TYPE x[BATCH_SIZE][imgsize];
 
 			size_t BSIZE = (b == xsize/BATCH_SIZE) ? (xsize % BATCH_SIZE) : BATCH_SIZE;
+			//std::cout<<b<<" "<<BSIZE<<" "<<std::endl;
 			for(size_t i=0; i<BSIZE; i++){
-				for(size_t n=0; n<X[b*BSIZE + i].size(); n++){ // imgsize
-					x[i][n] = X[b*BSIZE + i][n];
+				for(size_t n=0; n<X[b*BATCH_SIZE + i].size(); n++){ // imgsize
+					x[i][n] = X[b*BATCH_SIZE + i][n];
 				}
-				// x[i][0][0] = X[b*BSIZE + i][0];
-				label[i] = Y[b*BSIZE + i];
+				label[i] = Y[b*BATCH_SIZE + i];
 			}
 			
 			// TODO: generate these:
 			float kernel_time, l1t, l2t, l3t, l4t, l5t, l6t, l7t, l8t, l9t, l10t, l11t, l1kt, l2kt, l3kt, l4kt, l5kt, l6kt, l7kt, l8kt, l9kt, l10kt, l11kt;
-			std::tie(kernel_time, l1t, l2t, l3t, l4t, l5t, l6t, l7t, l8t, l9t, l10t, l11t, l1kt, l2kt, l3kt, l4kt, l5kt, l6kt, l7kt, l8kt, l9kt, l10kt, l11kt) = predict(&x[0][0], output);
+			std::tie(kernel_time, l1t, l2t, l3t, l4t, l5t, l6t, l7t, l8t, l9t, l10t, l11t, l1kt, l2kt, l3kt, l4kt, l5kt, l6kt, l7kt, l8kt, l9kt, l10kt, l11kt) = predict_cudatest(&x[0][0], output);
 			total_kernel_time += kernel_time;
 			l1_time += l1t, l2_time += l2t, l3_time += l3t, l4_time += l4t, l5_time += l5t, l6_time += l6t, l7_time += l7t, l8_time += l8t, l9_time += l9t, l10_time += l10t, l11_time += l11t;
 			l1_kernel_time += l1kt, l2_kernel_time += l2kt, l3_kernel_time += l3kt, l4_kernel_time += l4kt, l5_kernel_time += l5kt, l6_kernel_time += l6kt, l7_kernel_time += l7kt, l8_kernel_time += l8kt, l9_kernel_time += l9kt, l10_kernel_time += l10kt, l11_kernel_time += l11kt;
@@ -137,20 +140,19 @@ auto benchmark(std::vector<std::vector<FEATURE_TYPE>> &X, std::vector<unsigned i
 			// }
 			// std::cout<<std::endl;
 
-			// TODO adapt for multiple batches in the matches code:
 			if constexpr (N_CLASSES >= 2) {
-				for(unsigned int b = 0; b < BSIZE; b++){
-					LABEL_TYPE max = output[b*N_CLASSES];
+				for(unsigned int i = 0; i < BSIZE; i++){
+					LABEL_TYPE max = output[i*N_CLASSES];
 					unsigned int argmax = 0;
 					for (unsigned int j = 1; j < N_CLASSES; j++) {
-						if (output[b*N_CLASSES + j] > max) {
-							max = output[b*N_CLASSES + j];
+						if (output[i*N_CLASSES + j] > max) {
+							max = output[i*N_CLASSES + j];
 							argmax = j;
 						}
 					}
-					// std::cout<<"ximage: "<<b<<" | "<<"label: "<<label[b]<<", argmax: "<<argmax<<std::endl;
-					if (argmax == label[b]) {
-						// std::cout<<"image: "<<b<<" | "<<"label: "<<label[b]<<", argmax: "<<argmax<<std::endl;
+					//std::cout<<"ximage: "<<b*BATCH_SIZE+i<<" | "<<"label: "<<label[i]<<", argmax: "<<argmax<<std::endl;
+					if (argmax == label[i]) {
+						// std::cout<<"image: "<<b*BATCH_SIZE+i<<" | "<<"label: "<<label[b]<<", argmax: "<<argmax<<std::endl;
 						++matches;
 					}
 				}

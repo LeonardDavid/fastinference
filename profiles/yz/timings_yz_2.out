@@ -1,0 +1,31 @@
+Using CUDA profile yz
+RUNNING BENCHMARK WITH 1 REPETITIONS
+
+Dataset size: 10000
+Image size: 784
+Batch size: 2
+=> Executing 10000 images in 5000 batches of 2...
+
+Matches: 9031/10000
+Accuracy: 90.31 %
+Reference Accuracy: 90.31 %
+
+Difference: -2.44141e-06
+90.31,90.31,-2.44141e-06,25534.7
+
+Total CPU time: 25.53 [s] => Latency: 2.55 [ms/elem]
+Total GPU time: 3.08 [s] => Latency: 0.31 [ms/elem]
+
+Layer 01 time:       0.00[s], Ratio:    0.00% => kernel:       0.00[s], kRatio:    0.00%
+Layer 02 time:       4.90[s], Ratio:   19.20% => kernel:       1.88[s], kRatio:   61.23%
+Layer 03 time:       0.41[s], Ratio:    1.61% => kernel:       0.00[s], kRatio:    0.00%
+Layer 04 time:       4.06[s], Ratio:   15.92% => kernel:       0.31[s], kRatio:    9.96%
+Layer 05 time:       4.22[s], Ratio:   16.55% => kernel:       0.36[s], kRatio:   11.74%
+Layer 06 time:       0.13[s], Ratio:    0.49% => kernel:       0.00[s], kRatio:    0.00%
+Layer 07 time:       3.59[s], Ratio:   14.08% => kernel:       0.10[s], kRatio:    3.17%
+Layer 08 time:       0.00[s], Ratio:    0.00% => kernel:       0.00[s], kRatio:    0.00%
+Layer 09 time:       4.24[s], Ratio:   16.62% => kernel:       0.32[s], kRatio:   10.43%
+Layer 10 time:       0.00[s], Ratio:    0.01% => kernel:       0.00[s], kRatio:    0.00%
+Layer 11 time:       3.96[s], Ratio:   15.52% => kernel:       0.11[s], kRatio:    3.47%
+
+Total time: 28.60s

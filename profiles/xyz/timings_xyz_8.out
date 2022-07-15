@@ -11,21 +11,21 @@ Accuracy: 90.31 %
 Reference Accuracy: 90.31 %
 
 Difference: -2.44141e-06
-90.31,90.31,-2.44141e-06,6477.89
+90.31,90.31,-2.44141e-06,6773.67
 
-Total CPU time: 6.48 [s] => Latency: 0.65 [ms/elem]
-Total GPU time: 0.86 [s] => Latency: 0.09 [ms/elem]
+Total CPU time: 6.77 [s] => Latency: 0.68 [ms/elem]
+Total GPU time: 0.90 [s] => Latency: 0.09 [ms/elem]
 
-Layer 01 time:       0.00[s], Ratio:    0.00% => kernel:       0.00[s], kRatio:    0.00%
-Layer 02 time:       1.53[s], Ratio:   23.65% => kernel:       0.56[s], kRatio:   64.66%
-Layer 03 time:       0.36[s], Ratio:    5.50% => kernel:       0.00[s], kRatio:    0.00%
-Layer 04 time:       0.97[s], Ratio:   14.97% => kernel:       0.06[s], kRatio:    7.22%
-Layer 05 time:       0.94[s], Ratio:   14.56% => kernel:       0.10[s], kRatio:   11.56%
-Layer 06 time:       0.13[s], Ratio:    1.99% => kernel:       0.00[s], kRatio:    0.00%
-Layer 07 time:       0.80[s], Ratio:   12.33% => kernel:       0.06[s], kRatio:    6.87%
-Layer 08 time:       0.00[s], Ratio:    0.00% => kernel:       0.00[s], kRatio:    0.00%
-Layer 09 time:       0.89[s], Ratio:   13.71% => kernel:       0.06[s], kRatio:    7.18%
-Layer 10 time:       0.00[s], Ratio:    0.03% => kernel:       0.00[s], kRatio:    0.00%
-Layer 11 time:       0.86[s], Ratio:   13.26% => kernel:       0.02[s], kRatio:    2.52%
+ Layer  0 time:       0.00[s], Ratio:    0.00% => kernel:       0.00[s], kRatio:    0.00%
+ Layer  1 time:       1.66[s], Ratio:   24.45% => kernel:       0.60[s], kRatio:   66.21%
+ Layer  2 time:       0.31[s], Ratio:    4.53% => kernel:       0.00[s], kRatio:    0.00%
+ Layer  3 time:       1.00[s], Ratio:   14.74% => kernel:       0.06[s], kRatio:    6.74%
+ Layer  4 time:       1.00[s], Ratio:   14.83% => kernel:       0.11[s], kRatio:   11.85%
+ Layer  5 time:       0.12[s], Ratio:    1.81% => kernel:       0.00[s], kRatio:    0.00%
+ Layer  6 time:       0.83[s], Ratio:   12.22% => kernel:       0.06[s], kRatio:    6.61%
+ Layer  7 time:       0.00[s], Ratio:    0.00% => kernel:       0.00[s], kRatio:    0.00%
+ Layer  8 time:       0.94[s], Ratio:   13.93% => kernel:       0.06[s], kRatio:    6.60%
+ Layer  9 time:       0.00[s], Ratio:    0.02% => kernel:       0.00[s], kRatio:    0.00%
+ Layer 10 time:       0.91[s], Ratio:   13.45% => kernel:       0.02[s], kRatio:    2.00%
 
-Total time: 7.33s
+Total time: 7.67s

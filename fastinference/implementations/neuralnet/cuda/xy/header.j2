@@ -10,14 +10,5 @@ namespace {{namespace}} {
     #define N_CLASSES {{model.n_classes}}
     #define N_FEATURES {{model.n_features}}
 
-    std::tuple<float,
-    {%- for i in range(out_layer_id) -%}
-    float,
-    {%- endfor -%}
-    {%- for i in range(out_layer_id) -%}
-    float{%- if i != out_layer_id-1 -%},{%- endif -%}
-    {%- endfor -%}
-    >
-    // void
-    predict_{{ model.name }}({{ feature_type }} const * const x, {{ label_type }} * pred);
+    void predict_{{ model.name }}({{ feature_type }} const * const x, {{ label_type }} * pred, float * ln_times);
 }

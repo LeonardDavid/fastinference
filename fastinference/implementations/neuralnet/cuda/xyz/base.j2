@@ -15,16 +15,7 @@ using namespace std;
 
 namespace {{namespace}} {
 
-std::tuple<float,
-{%- for i in range(out_layer_id) -%}
-float,
-{%- endfor -%}
-{%- for i in range(out_layer_id) -%}
-float{%- if i != out_layer_id-1 -%},{%- endif -%}
-{%- endfor -%}
->
-//void
-predict_{{name}}({{ feature_type }} const * const x, {{ label_type }} * pred) {
+void predict_{{name}}({{ feature_type }} const * const x, {{ label_type }} * pred, float * ln_times) {
     auto layer_{{ in_layer_id }}_output = x;
 
     float kernel_time = 0;
@@ -37,7 +28,17 @@ predict_{{name}}({{ feature_type }} const * const x, {{ label_type }} * pred) {
       }
     }
 
-    return std::make_tuple(kernel_time, {% for i in range(out_layer_id) %}l{{ i+1 }}_time, {% endfor %}{% for i in range(out_layer_id) %}l{{ i+1 }}_kernel_time{% if i+1 != out_layer_id %}, {% endif %}{% endfor %});
+    ln_times[0] = kernel_time;
+    
+    // TODO in future maybe use array values directly? -> edit every file cuda_[layer].j2 in every folder
+    {% for i in range(out_layer_id) %}
+    ln_times[{{i+1}}] = l{{ i+1 }}_time;
+    ln_times[{{out_layer_id + i + 1}}] = l{{i+1}}_kernel_time;
+    {% endfor %}
+    
+    //for(int i = 0; i < {{2*out_layer_id+1}}; i++){
+    //  std::cout<<i<<": "<<ln_times[i]<<std::endl;
+    //}
 }
 
 }

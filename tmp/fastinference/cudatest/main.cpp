@@ -67,7 +67,7 @@ auto read_csv(std::string &path) {
 	return std::make_tuple(X,Y);
 }
 
-auto benchmark(std::vector<std::vector<FEATURE_TYPE>> &X, std::vector<unsigned int> &Y, unsigned int repeat, std::string prof_path) {
+auto benchmark(std::vector<std::vector<FEATURE_TYPE>> &X, std::vector<unsigned int> &Y, unsigned int repeat, std::string prof_path, float * ln_total, float * ln_kernel_total) {
 
 	LABEL_TYPE * output = new LABEL_TYPE[N_CLASSES*BATCH_SIZE];
     unsigned int n_features = X[0].size();
@@ -92,9 +92,9 @@ auto benchmark(std::vector<std::vector<FEATURE_TYPE>> &X, std::vector<unsigned i
 	f<<std::endl;
 
 	float total_kernel_time = 0;
-	// TODO generate these:
-    float l1_time = 0, l2_time = 0, l3_time = 0, l4_time = 0, l5_time = 0, l6_time = 0, l7_time = 0, l8_time = 0, l9_time = 0, l10_time = 0, l11_time = 0;
-    float l1_kernel_time = 0, l2_kernel_time = 0, l3_kernel_time = 0, l4_kernel_time = 0, l5_kernel_time = 0, l6_kernel_time = 0, l7_kernel_time = 0, l8_kernel_time = 0, l9_kernel_time = 0, l10_kernel_time = 0, l11_kernel_time = 0;
+
+	float * ln_times = new float[23];
+	std::fill(ln_times, ln_times+23, 0);
 
     auto start = std::chrono::high_resolution_clock::now();
     for (unsigned int k = 0; k < repeat; ++k) {
@@ -125,12 +125,19 @@ auto benchmark(std::vector<std::vector<FEATURE_TYPE>> &X, std::vector<unsigned i
 				label[i] = Y[b*BATCH_SIZE + i];
 			}
 			
-			// TODO: generate these:
-			float kernel_time, l1t, l2t, l3t, l4t, l5t, l6t, l7t, l8t, l9t, l10t, l11t, l1kt, l2kt, l3kt, l4kt, l5kt, l6kt, l7kt, l8kt, l9kt, l10kt, l11kt;
-			std::tie(kernel_time, l1t, l2t, l3t, l4t, l5t, l6t, l7t, l8t, l9t, l10t, l11t, l1kt, l2kt, l3kt, l4kt, l5kt, l6kt, l7kt, l8kt, l9kt, l10kt, l11kt) = predict_cudatest(&x[0][0], output);
-			total_kernel_time += kernel_time;
-			l1_time += l1t, l2_time += l2t, l3_time += l3t, l4_time += l4t, l5_time += l5t, l6_time += l6t, l7_time += l7t, l8_time += l8t, l9_time += l9t, l10_time += l10t, l11_time += l11t;
-			l1_kernel_time += l1kt, l2_kernel_time += l2kt, l3_kernel_time += l3kt, l4_kernel_time += l4kt, l5_kernel_time += l5kt, l6_kernel_time += l6kt, l7_kernel_time += l7kt, l8_kernel_time += l8kt, l9_kernel_time += l9kt, l10_kernel_time += l10kt, l11_kernel_time += l11kt;
+			predict_cudatest(&x[0][0], output, ln_times);
+			
+			total_kernel_time += ln_times[0];
+			
+			int j = 0;
+			for(int i = 1; i < 12; i++){
+				ln_total[j++] += ln_times[i];
+			}
+
+			j = 0;
+			for(int i = 12; i < 23; i++){
+				ln_kernel_total[j++] += ln_times[i];
+			}
 
 			// for(int b = 0; b<BSIZE; b++){
 			// 	for (int i=0;i<10;i++){
@@ -180,10 +187,7 @@ auto benchmark(std::vector<std::vector<FEATURE_TYPE>> &X, std::vector<unsigned i
 
 	f.close();
 
-	// TODO generate these:
-	return std::make_tuple(accuracy, total_cpu_time, cpu_time, total_kernel_time, kernel_time,
-		l1_time, l2_time, l3_time, l4_time, l5_time, l6_time, l7_time, l8_time, l9_time, l10_time, l11_time,
-        l1_kernel_time, l2_kernel_time, l3_kernel_time, l4_kernel_time, l5_kernel_time, l6_kernel_time, l7_kernel_time, l8_kernel_time, l9_kernel_time, l10_kernel_time, l11_kernel_time);
+	return std::make_tuple(accuracy, total_cpu_time, cpu_time, total_kernel_time, kernel_time);
 }
 
 int main (int argc, char *argv[]) {
@@ -212,8 +216,15 @@ int main (int argc, char *argv[]) {
 	fout << "RUNNING BENCHMARK WITH " << repeat << " REPETITIONS" << std::endl << std::endl;
 
 	fout.close();
+	
+	const int NR_LAYERS = 11;
 
-    auto results = benchmark(std::get<0>(data), std::get<1>(data), repeat, profile_path);
+	float * ln_total = new float[11];
+	std::fill(ln_total, ln_total+11, 0);
+	float * ln_kernel_total = new float[11];
+	std::fill(ln_kernel_total, ln_kernel_total+11, 0);
+
+    auto results = benchmark(std::get<0>(data), std::get<1>(data), repeat, profile_path, ln_total, ln_kernel_total);
     
 	std::ofstream fo(profile_path, std::ios::app); // append to file to not overwrite here
 
@@ -249,59 +260,21 @@ int main (int argc, char *argv[]) {
 	fo << "\n";
 
 	// for profiling layers
-	// TODO generate these:
-    float l1_time = std::get<5>(results)/1000000000.0f; // ns / 1e9 -> s
-    float l2_time = std::get<6>(results)/1000000000.0f; // ns / 1e9 -> s
-    float l3_time = std::get<7>(results)/1000000000.0f; // ns / 1e9 -> s
-    float l4_time = std::get<8>(results)/1000000000.0f; // ns / 1e9 -> s
-    float l5_time = std::get<9>(results)/1000000000.0f; // ns / 1e9 -> s
-    float l6_time = std::get<10>(results)/1000000000.0f; // ns / 1e9 -> s
-    float l7_time = std::get<11>(results)/1000000000.0f; // ns / 1e9 -> s
-    float l8_time = std::get<12>(results)/1000000000.0f; // ns / 1e9 -> s
-    float l9_time = std::get<13>(results)/1000000000.0f; // ns / 1e9 -> s
-    float l10_time = std::get<14>(results)/1000000000.0f; // ns / 1e9 -> s
-    float l11_time = std::get<15>(results)/1000000000.0f; // ns / 1e9 -> s
+	float sum_l = 0, sum_kl = 0;
+	for (int j = 0; j < 11; j++){
+		ln_total[j] /= 1000000000.0f; // ns / 1e9 -> s
+		ln_kernel_total[j] /= 1000.0f; // ms / 1e3 -> s
+		
+		sum_l += ln_total[j];
+		sum_kl += ln_kernel_total[j];
+	}
 
-	float l1_ktime = std::get<16>(results)/1000.0f; // ms / 1e3 -> s
-	float l2_ktime = std::get<17>(results)/1000.0f; // ms / 1e3 -> s
-	float l3_ktime = std::get<18>(results)/1000.0f; // ms / 1e3 -> s
-	float l4_ktime = std::get<19>(results)/1000.0f; // ms / 1e3 -> s
-	float l5_ktime = std::get<20>(results)/1000.0f; // ms / 1e3 -> s
-	float l6_ktime = std::get<21>(results)/1000.0f; // ms / 1e3 -> s
-	float l7_ktime = std::get<22>(results)/1000.0f; // ms / 1e3 -> s
-	float l8_ktime = std::get<23>(results)/1000.0f; // ms / 1e3 -> s
-	float l9_ktime = std::get<24>(results)/1000.0f; // ms / 1e3 -> s
-	float l10_ktime = std::get<25>(results)/1000.0f; // ms / 1e3 -> s
-	float l11_ktime = std::get<26>(results)/1000.0f; // ms / 1e3 -> s
-
-    float sum_l = l1_time + l2_time + l3_time + l4_time + l5_time + l6_time + l7_time + l8_time + l9_time + l10_time + l11_time;
-    float sum_kl = l1_ktime + l2_ktime + l3_ktime + l4_ktime + l5_ktime + l6_ktime + l7_ktime + l8_ktime + l9_ktime + l10_ktime + l11_ktime;
-
-	printf("%-15s %-10.2f [s] %-10s %-5.2f% => %-5s %-5.2f [s] %-10s %-5.2f%\n", "Layer 1 time:", l1_time, "Ratio:", (l1_time/sum_l)*100, "kernel:", l1_ktime, "kRatio:", (l1_ktime/sum_kl)*100);
-    printf("%-15s %-10.2f [s] %-10s %-5.2f% => %-5s %-5.2f [s] %-10s %-5.2f%\n", "Layer 2 time:", l2_time, "Ratio:", (l2_time/sum_l)*100, "kernel:", l2_ktime, "kRatio:", (l2_ktime/sum_kl)*100);
-    printf("%-15s %-10.2f [s] %-10s %-5.2f% => %-5s %-5.2f [s] %-10s %-5.2f%\n", "Layer 3 time:", l3_time, "Ratio:", (l3_time/sum_l)*100, "kernel:", l3_ktime, "kRatio:", (l3_ktime/sum_kl)*100);
-    printf("%-15s %-10.2f [s] %-10s %-5.2f% => %-5s %-5.2f [s] %-10s %-5.2f%\n", "Layer 4 time:", l4_time, "Ratio:", (l4_time/sum_l)*100, "kernel:", l4_ktime, "kRatio:", (l4_ktime/sum_kl)*100);
-    printf("%-15s %-10.2f [s] %-10s %-5.2f% => %-5s %-5.2f [s] %-10s %-5.2f%\n", "Layer 5 time:", l5_time, "Ratio:", (l5_time/sum_l)*100, "kernel:", l5_ktime, "kRatio:", (l5_ktime/sum_kl)*100);
-    printf("%-15s %-10.2f [s] %-10s %-5.2f% => %-5s %-5.2f [s] %-10s %-5.2f%\n", "Layer 6 time:", l6_time, "Ratio:", (l6_time/sum_l)*100, "kernel:", l6_ktime, "kRatio:", (l6_ktime/sum_kl)*100);
-    printf("%-15s %-10.2f [s] %-10s %-5.2f% => %-5s %-5.2f [s] %-10s %-5.2f%\n", "Layer 7 time:", l7_time, "Ratio:", (l7_time/sum_l)*100, "kernel:", l7_ktime, "kRatio:", (l7_ktime/sum_kl)*100);
-    printf("%-15s %-10.2f [s] %-10s %-5.2f% => %-5s %-5.2f [s] %-10s %-5.2f%\n", "Layer 8 time:", l8_time, "Ratio:", (l8_time/sum_l)*100, "kernel:", l8_ktime, "kRatio:", (l8_ktime/sum_kl)*100);
-    printf("%-15s %-10.2f [s] %-10s %-5.2f% => %-5s %-5.2f [s] %-10s %-5.2f%\n", "Layer 9 time:", l9_time, "Ratio:", (l9_time/sum_l)*100, "kernel:", l9_ktime, "kRatio:", (l9_ktime/sum_kl)*100);
-    printf("%-15s %-10.2f [s] %-10s %-5.2f% => %-5s %-5.2f [s] %-10s %-5.2f%\n", "Layer 10 time:", l10_time, "Ratio:", (l10_time/sum_l)*100, "kernel:", l10_ktime, "kRatio:", (l10_ktime/sum_kl)*100);
-    printf("%-15s %-10.2f [s] %-10s %-5.2f% => %-5s %-5.2f [s] %-10s %-5.2f%\n", "Layer 11 time:", l11_time, "Ratio:", (l11_time/sum_l)*100, "kernel:", l11_ktime, "kRatio:", (l11_ktime/sum_kl)*100);
-    printf("\n");
+	for(int j = 0; j < 11; j++){
+		printf("%s%-2d%-15s %-10.2f [s] %-10s %-5.2f% => %-5s %-5.2f [s] %-10s %-5.2f%\n", "Layer ", j," time:", ln_total[j], "Ratio:", (ln_total[j]/sum_l)*100, "kernel:", ln_kernel_total[j], "kRatio:", (ln_kernel_total[j]/sum_kl)*100);
+		fo << std::fixed << std::setw(7) << "Layer "<< std::setw(2) << j <<" time: " << std::setw(10) << std::setprecision(2) << ln_total[j] << std::setw(10) << "[s], Ratio: " << std::setw(7) << std::setprecision(2) << (ln_total[j]/sum_l)*100 << std::setw(10) << "% => kernel: " << std::setw(10) << std::setprecision(2) << ln_kernel_total[j] << std::setw(10) << "[s], kRatio: " << std::setw(7) << std::setprecision(2) << (ln_kernel_total[j]/sum_kl)*100 << "%\n";
+	}
+	printf("\n");
     printf("%-15s %.2f [s]\n", "Total time:", sum_l + sum_kl);
-
-	fo << std::fixed << std::setw(7) << "Layer 01 time: " << std::setw(10) << std::setprecision(2) << l1_time << std::setw(10) << "[s], Ratio: " << std::setw(7) << std::setprecision(2) << (l1_time/sum_l)*100 << std::setw(10) << "% => kernel: " << std::setw(10) << std::setprecision(2) << l1_ktime << std::setw(10) << "[s], kRatio: " << std::setw(7) << std::setprecision(2) << (l1_ktime/sum_kl)*100 << "%\n";
-	fo << std::fixed << std::setw(7) << "Layer 02 time: " << std::setw(10) << std::setprecision(2) << l2_time << std::setw(10) << "[s], Ratio: " << std::setw(7) << std::setprecision(2) << (l2_time/sum_l)*100 << std::setw(10) << "% => kernel: " << std::setw(10) << std::setprecision(2) << l2_ktime << std::setw(10) << "[s], kRatio: " << std::setw(7) << std::setprecision(2) << (l2_ktime/sum_kl)*100 << "%\n";
-	fo << std::fixed << std::setw(7) << "Layer 03 time: " << std::setw(10) << std::setprecision(2) << l3_time << std::setw(10) << "[s], Ratio: " << std::setw(7) << std::setprecision(2) << (l3_time/sum_l)*100 << std::setw(10) << "% => kernel: " << std::setw(10) << std::setprecision(2) << l3_ktime << std::setw(10) << "[s], kRatio: " << std::setw(7) << std::setprecision(2) << (l3_ktime/sum_kl)*100 << "%\n";
-	fo << std::fixed << std::setw(7) << "Layer 04 time: " << std::setw(10) << std::setprecision(2) << l4_time << std::setw(10) << "[s], Ratio: " << std::setw(7) << std::setprecision(2) << (l4_time/sum_l)*100 << std::setw(10) << "% => kernel: " << std::setw(10) << std::setprecision(2) << l4_ktime << std::setw(10) << "[s], kRatio: " << std::setw(7) << std::setprecision(2) << (l4_ktime/sum_kl)*100 << "%\n";
-	fo << std::fixed << std::setw(7) << "Layer 05 time: " << std::setw(10) << std::setprecision(2) << l5_time << std::setw(10) << "[s], Ratio: " << std::setw(7) << std::setprecision(2) << (l5_time/sum_l)*100 << std::setw(10) << "% => kernel: " << std::setw(10) << std::setprecision(2) << l5_ktime << std::setw(10) << "[s], kRatio: " << std::setw(7) << std::setprecision(2) << (l5_ktime/sum_kl)*100 << "%\n";
-	fo << std::fixed << std::setw(7) << "Layer 06 time: " << std::setw(10) << std::setprecision(2) << l6_time << std::setw(10) << "[s], Ratio: " << std::setw(7) << std::setprecision(2) << (l6_time/sum_l)*100 << std::setw(10) << "% => kernel: " << std::setw(10) << std::setprecision(2) << l6_ktime << std::setw(10) << "[s], kRatio: " << std::setw(7) << std::setprecision(2) << (l6_ktime/sum_kl)*100 << "%\n";
-	fo << std::fixed << std::setw(7) << "Layer 07 time: " << std::setw(10) << std::setprecision(2) << l7_time << std::setw(10) << "[s], Ratio: " << std::setw(7) << std::setprecision(2) << (l7_time/sum_l)*100 << std::setw(10) << "% => kernel: " << std::setw(10) << std::setprecision(2) << l7_ktime << std::setw(10) << "[s], kRatio: " << std::setw(7) << std::setprecision(2) << (l7_ktime/sum_kl)*100 << "%\n";
-	fo << std::fixed << std::setw(7) << "Layer 08 time: " << std::setw(10) << std::setprecision(2) << l8_time << std::setw(10) << "[s], Ratio: " << std::setw(7) << std::setprecision(2) << (l8_time/sum_l)*100 << std::setw(10) << "% => kernel: " << std::setw(10) << std::setprecision(2) << l8_ktime << std::setw(10) << "[s], kRatio: " << std::setw(7) << std::setprecision(2) << (l8_ktime/sum_kl)*100 << "%\n";
-	fo << std::fixed << std::setw(7) << "Layer 09 time: " << std::setw(10) << std::setprecision(2) << l9_time << std::setw(10) << "[s], Ratio: " << std::setw(7) << std::setprecision(2) << (l9_time/sum_l)*100 << std::setw(10) << "% => kernel: " << std::setw(10) << std::setprecision(2) << l9_ktime << std::setw(10) << "[s], kRatio: " << std::setw(7) << std::setprecision(2) << (l9_ktime/sum_kl)*100 << "%\n";
-	fo << std::fixed << std::setw(7) << "Layer 10 time: " << std::setw(10) << std::setprecision(2) << l10_time << std::setw(10) << "[s], Ratio: " << std::setw(7) << std::setprecision(2) << (l10_time/sum_l)*100 << std::setw(10) << "% => kernel: " << std::setw(10) << std::setprecision(2) << l10_ktime << std::setw(10) << "[s], kRatio: " << std::setw(7) << std::setprecision(2) << (l10_ktime/sum_kl)*100 << "%\n";
-	fo << std::fixed << std::setw(7) << "Layer 11 time: " << std::setw(10) << std::setprecision(2) << l11_time << std::setw(10) << "[s], Ratio: " << std::setw(7) << std::setprecision(2) << (l11_time/sum_l)*100 << std::setw(10) << "% => kernel: " << std::setw(10) << std::setprecision(2) << l11_ktime << std::setw(10) << "[s], kRatio: " << std::setw(7) << std::setprecision(2) << (l11_ktime/sum_kl)*100 << "%\n";
 	fo << "\n";
 	fo << std::fixed << "Total time: " << std::setprecision(2) << sum_l + sum_kl << "s\n";
 

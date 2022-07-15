@@ -15,7 +15,7 @@
 ########################
 
 //Number of images in a batch
-BATCH_SIZE:STRING=64
+BATCH_SIZE:STRING=2
 
 //Path to a program.
 CMAKE_ADDR2LINE:FILEPATH=/usr/bin/addr2line

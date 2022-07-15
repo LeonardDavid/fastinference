@@ -15,9 +15,7 @@ using namespace std;
 
 namespace FAST_INFERENCE {
 
-std::tuple<float,float,float,float,float,float,float,float,float,float,float,float,float,float,float,float,float,float,float,float,float,float,float>
-//void
-predict_cudatest(int const * const x, int * pred) {
+void predict_cudatest(int const * const x, int * pred, float * ln_times) {
     auto layer_0_output = x;
 
     float kernel_time = 0;
@@ -35,7 +33,7 @@ predict_cudatest(int const * const x, int * pred) {
 
     // // Layer 2: regular_conv2d
     // auto start = std::chrono::high_resolution_clock::now();
-    // // for(int b = 0; b < 64; b++){
+    // // for(int b = 0; b < 2; b++){
     // 	for (int h = 0; h < 26; h++) {
     // 		for (int w = 0; w < 26; w++) {
     // 			for (int m = 0; m < 32; m++) {
@@ -62,7 +60,7 @@ predict_cudatest(int const * const x, int * pred) {
 
     // // checksum L2 = 
     // ofstream g2("outputs/layer2/orig.out");
-    // for(int b = 0; b < 64; b++){
+    // for(int b = 0; b < 2; b++){
     //   sum_cpu = 0;
     //   for (int h = 0; h < 26; h++) {// 
     //     for (int w = 0; w < 26; w++) {
@@ -86,7 +84,7 @@ predict_cudatest(int const * const x, int * pred) {
 
     // // checksum L2 = 
     // ofstream gg2("outputs/layer2/par.out");
-    // for(int b = 0; b < 64; b++){
+    // for(int b = 0; b < 2; b++){
     //   sum_gpu = 0;
     //   for(int i=b*26*26*32;i<(b+1)*26*26*32;i++){
     //     sum_gpu += cuda_layer_2_output[i];
@@ -98,7 +96,7 @@ predict_cudatest(int const * const x, int * pred) {
 
     // Layer 3: Step
     start = std::chrono::high_resolution_clock::now();
-    for(int b = 0; b < 64; b++){
+    for(int b = 0; b < 2; b++){
       for (int h = 0; h < 26; h++) {
         for (int w = 0; w < 26; w++) {
           for (int c = 0; c < 32; c++) {
@@ -115,7 +113,7 @@ predict_cudatest(int const * const x, int * pred) {
     }
 
     // needed for GPU, but on CPU layers work with the normal layer_x_output from step
-    for(int b = 0; b < 64; b++){
+    for(int b = 0; b < 2; b++){
       for (int h = 0; h < 26; h++) {
         for (int w = 0; w < 26; w++) {
           for (int c = 0; c < 1; c++) {
@@ -131,7 +129,7 @@ predict_cudatest(int const * const x, int * pred) {
 
     // // Layer 4: MaxPool
     // start = std::chrono::high_resolution_clock::now();
-    // // for(int b = 0; b < 64; b++){
+    // // for(int b = 0; b < 2; b++){
     //   for (int h = 0; h < 13; h++) {
     //     for (int w = 0; w < 13; w++) {
     //       for (int c = 0; c < 1; c++) {
@@ -153,7 +151,7 @@ predict_cudatest(int const * const x, int * pred) {
      
     // // checksum L4 = 
     // ofstream g4("outputs/layer4/orig.out");
-    // for(int b = 0; b < 64; b++){
+    // for(int b = 0; b < 2; b++){
     //   sum_cpu = 0;
     //   for (int h = 0; h < 13; h++) {
     //     for (int w = 0; w < 13; w++) {
@@ -178,7 +176,7 @@ predict_cudatest(int const * const x, int * pred) {
 
     // // checksum L4 = 
     // ofstream gg4("outputs/layer4/par.out");
-    // for(int b = 0; b < 64; b++){
+    // for(int b = 0; b < 2; b++){
     //   sum_gpu = 0;
     //   //   for(int i=b*13*13*1;i<(b+1)*13*13*1;i++)
     //   //   {
@@ -191,7 +189,7 @@ predict_cudatest(int const * const x, int * pred) {
 
     // // Layer 5: conv2d
     // start = std::chrono::high_resolution_clock::now();
-    // // for(int b = 0; b < 64; b++){
+    // // for(int b = 0; b < 2; b++){
     //   for (int h = 0; h < 11; h++) {
     //     for (int w = 0; w < 11; w++) {
     //       for (int m = 0; m < 32; m++) {
@@ -215,7 +213,7 @@ predict_cudatest(int const * const x, int * pred) {
     // 
     // // checksum L5 = 
     // ofstream g5("outputs/layer5/orig.out");
-    // for(int b = 0; b < 64; b++){
+    // for(int b = 0; b < 2; b++){
     //   sum_cpu = 0;
     //   for (int h = 0; h < 11; h++) {// 
     //     for (int w = 0; w < 11; w++) {
@@ -239,7 +237,7 @@ predict_cudatest(int const * const x, int * pred) {
 
     // // checksum L5 = 
     // ofstream gg5("outputs/layer5/par.out");
-    // for(int b = 0; b < 64; b++){
+    // for(int b = 0; b < 2; b++){
     //   sum_gpu = 0;
     //   for(int i=b*11*11*32;i<(b+1)*11*11*32;i++){
     //     sum_gpu += cuda_layer_5_output[i];
@@ -251,7 +249,7 @@ predict_cudatest(int const * const x, int * pred) {
 
     // Layer 6: Step
     start = std::chrono::high_resolution_clock::now();
-    for(int b = 0; b < 64; b++){
+    for(int b = 0; b < 2; b++){
       for (int h = 0; h < 11; h++) {
         for (int w = 0; w < 11; w++) {
           for (int c = 0; c < 32; c++) {
@@ -268,7 +266,7 @@ predict_cudatest(int const * const x, int * pred) {
     }
 
     // needed for GPU, but on CPU layers work with the normal layer_x_output from step
-    for(int b = 0; b < 64; b++){
+    for(int b = 0; b < 2; b++){
       for (int h = 0; h < 11; h++) {
         for (int w = 0; w < 11; w++) {
           for (int c = 0; c < 1; c++) {
@@ -284,7 +282,7 @@ predict_cudatest(int const * const x, int * pred) {
 
     // // Layer 7: MaxPool
     // start = std::chrono::high_resolution_clock::now();
-    // // for(int b = 0; b < 64; b++){
+    // // for(int b = 0; b < 2; b++){
     //   for (int h = 0; h < 5; h++) {
     //     for (int w = 0; w < 5; w++) {
     //       for (int c = 0; c < 1; c++) {
@@ -306,7 +304,7 @@ predict_cudatest(int const * const x, int * pred) {
      
     // // checksum L7 = 
     // ofstream g7("outputs/layer7/orig.out");
-    // for(int b = 0; b < 64; b++){
+    // for(int b = 0; b < 2; b++){
     //   sum_cpu = 0;
     //   for (int h = 0; h < 5; h++) {
     //     for (int w = 0; w < 5; w++) {
@@ -331,7 +329,7 @@ predict_cudatest(int const * const x, int * pred) {
 
     // // checksum L7 = 
     // ofstream gg7("outputs/layer7/par.out");
-    // for(int b = 0; b < 64; b++){
+    // for(int b = 0; b < 2; b++){
     //   sum_gpu = 0;
     //   //   for(int i=b*5*5*1;i<(b+1)*5*5*1;i++)
     //   //   {
@@ -352,7 +350,7 @@ predict_cudatest(int const * const x, int * pred) {
 
     // // Layer 9: Gemm
     // start = std::chrono::high_resolution_clock::now();
-    //  // for(int b = 0; b < 64; b++){
+    //  // for(int b = 0; b < 2; b++){
     //   for (int d = 0; d < 32; d++) {
     //     cuda_layer_9_output[b*32 + d] = layer_9_bias[d];
     //   }
@@ -368,7 +366,7 @@ predict_cudatest(int const * const x, int * pred) {
     // 
     // // checksum L9 
     // ofstream g9("outputs/layer9/orig.out");
-    // for(int b = 0; b < 64; b++){
+    // for(int b = 0; b < 2; b++){
     //   sum_cpu = 0;
     //   for (int d = 0; d < 32; d++) {
     //     sum_cpu += cuda_layer_9_output[b*32 + d];
@@ -388,7 +386,7 @@ predict_cudatest(int const * const x, int * pred) {
 
     // // checksum L9
     // ofstream gg9("outputs/layer9/par.out");
-    // for(int b = 0; b < 64; b++){
+    // for(int b = 0; b < 2; b++){
     //   sum_gpu = 0;
     //   for(int i=b*32;i<(b+1)*32;i++){
     //     sum_gpu += cuda_layer_9_output[i];
@@ -400,7 +398,7 @@ predict_cudatest(int const * const x, int * pred) {
 
     // Layer 10: Step
     start = std::chrono::high_resolution_clock::now();
-    for(int b = 0; b < 64; b++){
+    for(int b = 0; b < 2; b++){
       for (int d = 0; d < 32; d++) {
         if (cuda_layer_9_output[b*32 + d] >= layer_10_threshold[d]) {
           layer_10_output[b][d / 32] |= (1U << (31 - d % 32));
@@ -418,7 +416,7 @@ predict_cudatest(int const * const x, int * pred) {
 
     // // Layer 11: Gemm
     // start = std::chrono::high_resolution_clock::now();
-    // // for(int b = 0; b < 64; b++){
+    // // for(int b = 0; b < 2; b++){
     //   for (int d = 0; d < 10; d++) {
     //     cuda_layer_11_output[b*10 + d] = layer_11_bias[d];
     //   }
@@ -434,7 +432,7 @@ predict_cudatest(int const * const x, int * pred) {
     // 
     // // checksum L11 
     // ofstream g11("outputs/layer11/orig.out");
-    // for(int b = 0; b < 64; b++){
+    // for(int b = 0; b < 2; b++){
     //   sum_cpu = 0;
     //   for (int d = 0; d < 10; d++) {
     //     sum_cpu += cuda_layer_11_output[b*10 + d];
@@ -454,7 +452,7 @@ predict_cudatest(int const * const x, int * pred) {
 
     // // checksum L11
     // ofstream gg11("outputs/layer11/par.out");
-    // for(int b = 0; b < 64; b++){
+    // for(int b = 0; b < 2; b++){
     //   sum_gpu = 0;
     //   for(int i=b*10;i<(b+1)*10;i++){
     //     sum_gpu += cuda_layer_11_output[i];
@@ -465,13 +463,41 @@ predict_cudatest(int const * const x, int * pred) {
     // cout<<endl;
 
 
-    for(int b = 0; b < 64; b++){
+    for(int b = 0; b < 2; b++){
       for (int i = 0; i < 10; i++) {
         pred[b*10 + i] += cuda_layer_11_output[b*10 + i];
       }
     }
 
-    return std::make_tuple(kernel_time, l1_time, l2_time, l3_time, l4_time, l5_time, l6_time, l7_time, l8_time, l9_time, l10_time, l11_time, l1_kernel_time, l2_kernel_time, l3_kernel_time, l4_kernel_time, l5_kernel_time, l6_kernel_time, l7_kernel_time, l8_kernel_time, l9_kernel_time, l10_kernel_time, l11_kernel_time);
+    ln_times[0] = kernel_time;
+    
+    // TODO in future maybe use array values directly? -> edit every file cuda_[layer].j2 in every folder
+    ln_times[1] = l1_time;
+    ln_times[12] = l1_kernel_time;
+    ln_times[2] = l2_time;
+    ln_times[13] = l2_kernel_time;
+    ln_times[3] = l3_time;
+    ln_times[14] = l3_kernel_time;
+    ln_times[4] = l4_time;
+    ln_times[15] = l4_kernel_time;
+    ln_times[5] = l5_time;
+    ln_times[16] = l5_kernel_time;
+    ln_times[6] = l6_time;
+    ln_times[17] = l6_kernel_time;
+    ln_times[7] = l7_time;
+    ln_times[18] = l7_kernel_time;
+    ln_times[8] = l8_time;
+    ln_times[19] = l8_kernel_time;
+    ln_times[9] = l9_time;
+    ln_times[20] = l9_kernel_time;
+    ln_times[10] = l10_time;
+    ln_times[21] = l10_kernel_time;
+    ln_times[11] = l11_time;
+    ln_times[22] = l11_kernel_time;
+    
+    //for(int i = 0; i < 23; i++){
+    //  std::cout<<i<<": "<<ln_times[i]<<std::endl;
+    //}
 }
 
 }

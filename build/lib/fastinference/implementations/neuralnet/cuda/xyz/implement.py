@@ -503,7 +503,7 @@ def to_implementation(model, out_path, out_name, weight = 1.0, namespace = "FAST
     print("STEP layers: {}".format(step_layer_ids))
 
     for layer_id, layer in enumerate(model.layers):
-        print("IMPLEMENTING {}: {}".format(layer_id, layer.name))
+        print("IMPLEMENTING {}: {}".format(layer_id+1, layer.name))
         # if layer_id == reshape_layer_id + 1:
         #     print("FIRST GEMM LAYER!")
 

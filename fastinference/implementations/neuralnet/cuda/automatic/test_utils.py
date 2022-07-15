@@ -8,6 +8,8 @@ import itertools
 import sys
 import os
 import subprocess
+
+from torch import batch_norm
 from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
 from sklearn.linear_model import RidgeClassifier
 
@@ -234,7 +236,7 @@ def prepare_onnxmodel(onnx_path, out_path, name, benchmark_file, implementation_
     
     subprocess.call(prepare_and_compile, shell=True)
 
-def run_experiment(out_path, name, feature_type, label_type, benchmark_file, batch_size, implem, n_repeat = 1):
+def run_experiment(out_path, name, feature_type, label_type, benchmark_file, batch_size, implem, nr_layers, n_repeat = 1):
     """Compiles and executes the cpp code in the given filename using the supplied benchmark file.
 
     Note 1: This code requires cmake for the compilation.
@@ -258,9 +260,10 @@ def run_experiment(out_path, name, feature_type, label_type, benchmark_file, bat
     
     prepare_and_compile = """
     cd {outpath} &&
-    cmake . -DMODELNAME={name} -DLABEL_TYPE={label_type} -DFEATURE_TYPE={feature_type} -DBATCH_SIZE={batch_size} '-DIMPL=\"{implem}\"' '-DOUT_PATH=\"{outpath}\"' &&
-    make""".replace("{outpath}", out_path).replace("{name}", name).replace("{label_type}", label_type).replace("{feature_type}", feature_type).replace("{batch_size}", str(batch_size)).replace("{implem}",implem)
+    cmake . -DMODELNAME={name} -DLABEL_TYPE={label_type} -DFEATURE_TYPE={feature_type} -DBATCH_SIZE={batch_size} '-DIMPL=\"{implem}\"' '-DOUT_PATH=\"{outpath}\"' -DNR_LAYERS={nr_layers} &&
+    make""".replace("{outpath}", out_path).replace("{name}", name).replace("{label_type}", label_type).replace("{feature_type}", feature_type).replace("{batch_size}", str(batch_size)).replace("{implem}",implem).replace("{nr_layers}",str(nr_layers))
     # Note: '-DIMPL="xyz"' needs to be exactly like that in order to have it as "xyz" in CMakeCache => std::string in c++ code
+    # Note: same for '-DOUT_PATH="path/to/output"'
 
     print("Calling {}".format(prepare_and_compile))
     subprocess.call(prepare_and_compile, shell=True)
@@ -331,6 +334,16 @@ def prepare_fastinference(model_path, out_path, batch_size, impl_folder, impleme
     print("Calling {}".format(prepare_and_compile))
     subprocess.call(prepare_and_compile, shell=True)
 
+    nr_layers = 0
+    for layer in fi_model.layers:
+        if layer.name != "batchnorm" and layer.name != "logsoftmax":
+            # batchnorm is merged into activation
+            # logsoftmax is not used (?) comparing to implement.py::to_implementation()
+            # print(layer.name)
+            nr_layers += 1
+
+    return nr_layers # return number of layers to be used in main.cpp
+
 def test_implementations(model, dataset, split, implementations, base_optimizers = [([None], [{}])], out_path = ".", model_name="Model", impl_folder = "cuda", n_repeat=1):
     print("Loading {}".format(dataset))
     #XTrain, YTrain, XTest, YTest = get_dataset(dataset,out_path,split)
@@ -367,12 +380,12 @@ def test_implementations(model, dataset, split, implementations, base_optimizers
     now = datetime.now().strftime('%d-%m-%y_%H-%M-%S')
 
     for impl, bopt in itertools.product(implementations, base_optimizers):
-        for batch_size in (2**p for p in range(0, 9)): # batch_size incrementing in powers of 2
+        for batch_size in (2**p for p in range(0, 7)): # batch_size incrementing in powers of 2
             out_path_ext = os.path.join(out_path, now, model_name + "/" + impl[0] + "/" + str(batch_size))
 
             impl[1]['batch_size'] = batch_size
 
-            prepare_fastinference(path_to_model, out_path_ext, batch_size, impl_folder, implementation_type = impl[0], implementation_args = impl[1], base_optimizer = bopt[0], base_optimizer_args = bopt[1])
+            nr_layers = prepare_fastinference(path_to_model, out_path_ext, batch_size, impl_folder, implementation_type = impl[0], implementation_args = impl[1], base_optimizer = bopt[0], base_optimizer_args = bopt[1])
 
             feature_type = impl[1].get("feature_type", "int")
             label_type = impl[1].get("label_type", "int")
@@ -383,7 +396,7 @@ def test_implementations(model, dataset, split, implementations, base_optimizers
                     #"implt_args":cfg_to_str(impl[1]),
                     "base_opt":bopt[0],
                     #"base_opt_args":cfg_to_str(bopt[1]),
-                    **run_experiment(out_path_ext, model_name, feature_type, label_type, path_to_testfile, batch_size, impl[0], n_repeat)
+                    **run_experiment(out_path_ext, model_name, feature_type, label_type, path_to_testfile, batch_size, impl[0], nr_layers, n_repeat)
                 }
             )
 

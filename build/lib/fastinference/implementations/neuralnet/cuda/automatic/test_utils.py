@@ -4,6 +4,7 @@ import copy
 from datetime import datetime
 from decimal import DecimalTuple
 from genericpath import exists
+from importlib.resources import path
 import itertools
 import sys
 import os
@@ -30,6 +31,8 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split
 from scipy.io.arff import loadarff
 import urllib.request
+
+import operator
 
 from fastinference.models.Ensemble import Ensemble
 
@@ -264,10 +267,10 @@ def run_experiment(out_path, name, feature_type, label_type, benchmark_file, bat
     make""".replace("{outpath}", out_path).replace("{name}", name).replace("{label_type}", label_type).replace("{feature_type}", feature_type).replace("{batch_size}", str(batch_size)).replace("{implem}",implem).replace("{nr_layers}",str(nr_layers))
     # Note: '-DIMPL="xyz"' needs to be exactly like that in order to have it as "xyz" in CMakeCache => std::string in c++ code
     # Note: same for '-DOUT_PATH="path/to/output"'
-
+    
+    print("\n")
     print("Calling {}".format(prepare_and_compile))
     subprocess.call(prepare_and_compile, shell=True)
-
     print("Running {} {} {}".format(os.path.join(out_path, "testCode"), benchmark_file, str(n_repeat)))
     
     output = subprocess.check_output([
@@ -278,20 +281,45 @@ def run_experiment(out_path, name, feature_type, label_type, benchmark_file, bat
 
     print(output)
     print('\n')
+
+    layers = []
     
-    # accuracy = output.split("\n")[-1].split(",")[0]
-    # diff = output.split("\n")[-1].split(",")[2]
-    # latency = output.split("\n")[-1].split(",")[3]
-    
-    # TODO placeholders for compatibility
-    accuracy = 69.0
-    diff = 0.69
-    latency = 6.9
+    accuracy = float(output.split("\n")[13].split(" ")[1]) # first line "using CUDA profile (...)" is on position [3]
+    diff = float(output.split("\n")[16].split(" ")[1])
+    cpu_time = float(output.split("\n")[19].split(" ")[3])
+    cpu_lat = float(output.split("\n")[19].split(" ")[7])
+    gpu_time = float(output.split("\n")[20].split(" ")[3])
+    gpu_lat = float(output.split("\n")[20].split(" ")[7])
+
+    for l in range(nr_layers):
+        layer_nr = int(output.split("\n")[22+l].split(" ")[1])
+        cpu_time_l = float(output.split("\n")[22+l].split(" ")[3])
+        cpu_ratio_l = float(output.split("\n")[22+l].split(" ")[6])
+        gpu_time_l = float(output.split("\n")[22+l].split(" ")[10])
+        gpu_ratio_l = float(output.split("\n")[22+l].split(" ")[13])
+        total_time_l = cpu_time_l+gpu_time_l
+
+        layer_row = []
+        layer_row.append(batch_size)
+        layer_row.append(layer_nr)
+        layer_row.append(implem)
+        layer_row.append(cpu_time_l)
+        # layer_row.append(cpu_ratio_l)
+        layer_row.append(gpu_time_l)
+        # layer_row.append(gpu_ratio_l)
+        layer_row.append(round(total_time_l,2))
+
+        layers.append(layer_row)
 
     return {
         "accuracy": accuracy,
         "diff accuracy": diff,
-        "latency [ms]": latency,
+        "total_time [s]": cpu_time + gpu_time,
+        "cpu_time [s]": cpu_time,
+        "cpu_lat [ms]": cpu_lat,
+        "gpu_time [s]": gpu_time, 
+        "gpu_lat [ms]": gpu_lat,
+        "layers": layers,
         "size [Bytes]": os.path.getsize(os.path.join(out_path, "testCode"))
     }
 
@@ -331,6 +359,7 @@ def prepare_fastinference(model_path, out_path, batch_size, impl_folder, impleme
     cp ./fastinference/implementations/neuralnet/cuda/automatic/CMakeLists.txt {outpath}
     """.replace("{outpath}", out_path)
     
+    print("\n")
     print("Calling {}".format(prepare_and_compile))
     subprocess.call(prepare_and_compile, shell=True)
 
@@ -379,30 +408,196 @@ def test_implementations(model, dataset, split, implementations, base_optimizers
 
     now = datetime.now().strftime('%d-%m-%y_%H-%M-%S')
 
+    b_l = 1
+    b_u = 8
+
     for impl, bopt in itertools.product(implementations, base_optimizers):
-        for batch_size in (2**p for p in range(6, 7)): # batch_size incrementing in powers of 2
+        for batch_size in (2**p for p in range(b_l, b_u)): # batch_size incrementing in powers of 2
             out_path_ext = os.path.join(out_path, now, model_name + "/" + impl[0] + "/" + str(batch_size))
 
             impl[1]['batch_size'] = batch_size
 
             nr_layers = prepare_fastinference(path_to_model, out_path_ext, batch_size, impl_folder, implementation_type = impl[0], implementation_args = impl[1], base_optimizer = bopt[0], base_optimizer_args = bopt[1])
-            print(nr_layers)
 
             feature_type = impl[1].get("feature_type", "int")
             label_type = impl[1].get("label_type", "int")
 
             performance.append(
                 {
+                    "date_time":now,
                     "impl":impl[0],
-                    #"implt_args":cfg_to_str(impl[1]),
+                    "bch_sz": batch_size,
                     "base_opt":bopt[0],
-                    #"base_opt_args":cfg_to_str(bopt[1]),
                     **run_experiment(out_path_ext, model_name, feature_type, label_type, path_to_testfile, batch_size, impl[0], nr_layers, n_repeat)
                 }
             )
 
-            # if len(bopt[0]) == 1 and bopt[0][0] is None and len(eopt[0]) == 1 and eopt[0][0] is None and abs(float(performance[-1]["diff accuracy"])) > 1e-5:
-            #     print("FAILED: Diff accuracy did not match in un-optimized implementation. Difference is {}".format(performance[-1]["diff accuracy"]))
-            #     sys.exit(1)
+    layers = []
     
+    for entry in range(len(performance)):
+        for layer in range(len(performance[0].get("layers"))):
+            layers.append(performance[entry].get("layers")[layer])
+
+    # layers = [[4, 1, 'cpu', 0.0, 0.0, 0.0], [4, 2, 'cpu', 0.25, 0.0, 0.25], [4, 3, 'cpu', 0.34, 0.0, 0.34], [4, 4, 'cpu', 0.0, 0.0, 0.0], [4, 5, 'cpu', 0.33, 0.0, 0.33], [4, 6, 'cpu', 0.13, 0.0, 0.13], [4, 7, 'cpu', 0.0, 0.0, 0.0], [4, 8, 'cpu', 0.0, 0.0, 0.0], [4, 9, 'cpu', 0.01, 0.0, 0.01], [4, 10, 'cpu', 0.0, 0.0, 0.0], [4, 11, 'cpu', 0.0, 0.0, 0.0], [8, 1, 'cpu', 0.0, 0.0, 0.0], [8, 2, 'cpu', 0.22, 0.0, 0.22], [8, 3, 'cpu', 0.28, 0.0, 0.28], [8, 4, 'cpu', 0.0, 0.0, 0.0], [8, 5, 'cpu', 0.29, 0.0, 0.29], [8, 6, 'cpu', 0.12, 0.0, 0.12], [8, 7, 'cpu', 0.0, 0.0, 0.0], [8, 8, 'cpu', 0.0, 0.0, 0.0], [8, 9, 'cpu', 0.01, 0.0, 0.01], [8, 10, 'cpu', 0.0, 0.0, 0.0], [8, 11, 'cpu', 0.0, 0.0, 0.0], [4, 1, 'xyz', 0.0, 0.0, 0.0], [4, 2, 'xyz', 2.57, 0.85, 3.42], [4, 3, 'xyz', 0.4, 0.0, 0.4], [4, 4, 'xyz', 1.9, 0.13, 2.03], [4, 5, 'xyz', 1.91, 0.17, 2.08], [4, 6, 'xyz', 0.12, 0.0, 0.12], [4, 7, 'xyz', 1.64, 0.03, 1.67], [4, 8, 'xyz', 0.0, 0.0, 0.0], [4, 9, 'xyz', 1.85, 0.13, 1.98], [4, 10, 'xyz', 0.0, 0.0, 0.0], [4, 11, 'xyz', 1.76, 0.05, 1.81], [8, 1, 'xyz', 0.0, 0.0, 0.0], [8, 2, 'xyz', 1.57, 0.56, 2.13], [8, 3, 'xyz', 0.31, 0.0, 0.31], [8, 4, 'xyz', 0.97, 0.06, 1.03], [8, 5, 'xyz', 0.94, 0.1, 1.04], [8, 6, 'xyz', 0.12, 0.0, 0.12], [8, 7, 'xyz', 0.79, 0.06, 0.85], [8, 8, 'xyz', 0.0, 0.0, 0.0], [8, 9, 'xyz', 0.87, 0.06, 0.93], [8, 10, 'xyz', 0.0, 0.0, 0.0], [8, 11, 'xyz', 0.84, 0.03, 0.87]]
+
+    # print(layers)
+    # print("\n")
+
+    layers.sort(key = operator.itemgetter(0, 1, 2))
+
+    # print(layers)
+    # print("\n")
+
+    # create dictionary in a way that is easy to read and to work with
+
+    batch_layer = []
+
+    batch_dict = {}
+    batch_key = layers[0][0]
+
+    for layer in range(len(layers)):
+        # print(layers[layer])
+        # if layer != len(layers)-1:
+        #     if layers[layer][0] != layers[layer+1][0]:
+        #         print("\n")
+        #     if layers[layer][1] != layers[layer+1][1]:
+        #         print("\n")
+
+        if batch_key != layers[layer][0]:
+            batch_dict[batch_key] = batch_layer
+            batch_layer = []
+            batch_key = layers[layer][0]
+        
+        batch_layer.append(layers[layer])
+
+        if layer == len(layers)-1: # to make sure the last element is inserted
+            batch_dict[batch_key] = batch_layer
+            batch_layer = []        
+
+    # print("\n")
+    # print(batch_dict)
+    # print("\n")
+
+    batch_dict2 = {}
+
+    for batch_key in batch_dict:
+        # print(batch_dict[batch_key])
+        
+        batch_layer2 = []
+
+        batch_dict2[batch_key] = {}
+        layer_key = batch_dict[batch_key][0][1]
+        
+        for layer in range(len(batch_dict[batch_key])):
+            # print(batch_dict[batch_key][layer])
+            if layer_key != batch_dict[batch_key][layer][1]:
+                batch_dict2[batch_key][layer_key] = batch_layer2
+                batch_layer2 = []
+                layer_key = batch_dict[batch_key][layer][1]
+            
+            batch_layer2.append(batch_dict[batch_key][layer])
+
+            if layer == len(batch_dict[batch_key])-1:
+                batch_dict2[batch_key][layer_key] = batch_layer2
+                batch_layer2 = []
+
+    # print("\n")
+    # print(batch_dict2)
+    # print("\n")
+
+    # create optimal configuration using dictionary
+
+    optimal_config = {}
+
+    for batch_key in batch_dict2:
+        for layer_key in batch_dict2[batch_key]:
+            batch_dict2[batch_key][layer_key].sort(key = operator.itemgetter(5))
+            for layer in range(len(batch_dict2[batch_key][layer_key])):
+                print(batch_dict2[batch_key][layer_key][layer])
+            print("\n")
+        print("\n")
+    print("\n")
+
+    optimal_times = []
+
+    for batch_key in batch_dict2:
+        optimal_config[batch_key] = []
+        total_cpu_time = 0
+        total_gpu_time = 0
+        total_time = 0
+        for layer_key in batch_dict2[batch_key]:
+            optimal_config[batch_key].append(batch_dict2[batch_key][layer_key][0])
+            total_cpu_time += batch_dict2[batch_key][layer_key][0][3]
+            total_gpu_time += batch_dict2[batch_key][layer_key][0][4]
+            total_time += batch_dict2[batch_key][layer_key][0][5]
+        optimal_times.append([batch_key, total_cpu_time, total_gpu_time, total_time])
+
+    # print("optimal configurations:")
+    # print(optimal_config)
+    # print("\n")
+
+    # for batch_key in optimal_config:
+    #     print(optimal_config[batch_key])
+    #     print("\n")
+
+    # print("\n")
+
+    # print("optimal times (unsorted)")
+    # print(optimal_times)
+
+    # for time in range(len(optimal_times)):
+    #     print(optimal_times[time])
+    # print("\n")
+
+    optimal_times.sort(key = operator.itemgetter(3))
+    
+    print("optimal times for each batch size:")
+    for time in range(len(optimal_times)):
+        print(optimal_times[time])
+    print("\n")
+
+    # print("optimal_time:")
+    # print(optimal_times[0])
+    # print("\n")
+
+    optimal_batch_size = optimal_times[0][0]
+
+    print("optimal batch_size: %d, cpu_time: %.2f, gpu_time: %.2f, total_time: %.2f" % (optimal_batch_size, optimal_times[0][1], optimal_times[0][2], optimal_times[0][3]))
+    print("\n")
+
+    implem = []
+
+    print("optimal configuration for layer:")
+    for layer in range(len(optimal_config[optimal_batch_size])):
+        print("%d: implem: %s" % (layer+1, optimal_config[optimal_batch_size][layer][2]))
+        implem.append(optimal_config[optimal_batch_size][layer][2])
+    print("\n")
+    
+    out_path_ext = os.path.join(out_path, now, model_name + "/automatic/" + str(optimal_batch_size))
+    impl_type = "automatic"
+    impl_args = {}
+    impl_args["label_type"] = "int"
+    impl_args["batch_size"] = optimal_batch_size
+    #impl_args["opt_impl"] = ['xyz', 'xyz', 'cpu', 'cpu', 'cpu', 'cpu', 'cpu', 'cpu', 'cpu', 'cpu', 'yz']
+    impl_args["opt_impl"] = implem
+
+    # print(impl_args["opt_impl"])
+    
+    print("Implementing optimal configuration:")
+    print("\n")
+    
+    nr_layers = prepare_fastinference(path_to_model, out_path_ext, optimal_batch_size, impl_folder, implementation_type = impl_type, implementation_args = impl_args, base_optimizer = [None], base_optimizer_args = [{}])
+
+    feature_type = "int"
+    label_type = "int"
+
+    performance.append(
+        {
+            "date_time":now,
+            "impl":impl_type,
+            "bch_sz": optimal_batch_size,
+            **run_experiment(out_path_ext, model_name, feature_type, label_type, path_to_testfile, optimal_batch_size, impl_type, nr_layers, n_repeat)     
+        }
+    )
+
     return performance

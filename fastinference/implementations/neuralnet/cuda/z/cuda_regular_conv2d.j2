@@ -1,4 +1,4 @@
-// layer {{layer_id}} regular_conv2d
+// layer {{layer_id}} regular_conv2d z
 
 __global__ void layer{{layer_id}}_gpu_kernel({{input_type}} *d_cuda_layer_{{layer_id-1}}_output, {{bias_data_type}} *d_layer_{{layer_id}}_bias, {{weight_data_type}} *d_cuda_layer_{{layer_id}}_weight, {{output_type}} *d_cuda_layer_{{layer_id}}_output){
     

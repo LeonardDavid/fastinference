@@ -1,4 +1,5 @@
 Using CUDA profile xz
+
 RUNNING BENCHMARK WITH 1 REPETITIONS
 
 Dataset size: 10000
@@ -11,21 +12,21 @@ Accuracy: 90.31 %
 Reference Accuracy: 90.31 %
 
 Difference: -2.44141e-06
-90.31,90.31,-2.44141e-06,25726.6
+90.31,90.31,-2.44141e-06,27539.4
 
-Total CPU time: 25.73 [s] => Latency: 2.57 [ms/elem]
-Total GPU time: 2.79 [s] => Latency: 0.28 [ms/elem]
+Total CPU time: 27.54 [s] => Latency: 2.75 [ms/elem]
+Total GPU time: 3.22 [s] => Latency: 0.32 [ms/elem]
 
  Layer  0 time:       0.00[s], Ratio:    0.00% => kernel:       0.00[s], kRatio:    0.00%
- Layer  1 time:       4.95[s], Ratio:   19.27% => kernel:       1.70[s], kRatio:   60.87%
- Layer  2 time:       0.32[s], Ratio:    1.26% => kernel:       0.00[s], kRatio:    0.00%
- Layer  3 time:       4.07[s], Ratio:   15.84% => kernel:       0.30[s], kRatio:   10.76%
- Layer  4 time:       4.28[s], Ratio:   16.65% => kernel:       0.32[s], kRatio:   11.29%
- Layer  5 time:       0.13[s], Ratio:    0.52% => kernel:       0.00[s], kRatio:    0.00%
- Layer  6 time:       3.63[s], Ratio:   14.13% => kernel:       0.09[s], kRatio:    3.10%
+ Layer  1 time:       5.30[s], Ratio:   19.26% => kernel:       1.90[s], kRatio:   59.07%
+ Layer  2 time:       0.33[s], Ratio:    1.21% => kernel:       0.00[s], kRatio:    0.00%
+ Layer  3 time:       4.30[s], Ratio:   15.62% => kernel:       0.33[s], kRatio:   10.16%
+ Layer  4 time:       4.58[s], Ratio:   16.66% => kernel:       0.37[s], kRatio:   11.62%
+ Layer  5 time:       0.14[s], Ratio:    0.49% => kernel:       0.00[s], kRatio:    0.00%
+ Layer  6 time:       3.86[s], Ratio:   14.03% => kernel:       0.14[s], kRatio:    4.45%
  Layer  7 time:       0.00[s], Ratio:    0.00% => kernel:       0.00[s], kRatio:    0.00%
- Layer  8 time:       4.30[s], Ratio:   16.70% => kernel:       0.30[s], kRatio:   10.65%
+ Layer  8 time:       4.64[s], Ratio:   16.87% => kernel:       0.32[s], kRatio:   10.06%
  Layer  9 time:       0.00[s], Ratio:    0.01% => kernel:       0.00[s], kRatio:    0.00%
- Layer 10 time:       4.01[s], Ratio:   15.61% => kernel:       0.09[s], kRatio:    3.33%
+ Layer 10 time:       4.36[s], Ratio:   15.85% => kernel:       0.15[s], kRatio:    4.64%
 
-Total time: 28.50s
+Total time: 30.74s

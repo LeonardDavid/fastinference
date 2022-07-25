@@ -4,6 +4,7 @@ import itertools
 import os
 import pandas as pd
 import argparse
+import csv
 
 from torch import optim
 from test_utils import get_dataset, prepare_fastinference, run_experiment, make_hash, test_implementations
@@ -31,7 +32,7 @@ def main():
     # XTrain, YTrain, _, _ = get_dataset(args.dataset,split=args.split)
 
     implementations = [ 
-        ("cpu",{"label_type":"int"},{"feature_type":"int"}), 
+        ("cpu",{"label_type":"int"},{"feature_type":"int"}),
         ("x",{"label_type":"int"},{"feature_type":"int"}),
         ("y",{"label_type":"int"},{"feature_type":"int"}),
         ("z",{"label_type":"int"},{"feature_type":"int"}),
@@ -69,6 +70,43 @@ def main():
     df = pd.DataFrame(performance)
     with pd.option_context('display.max_rows', None): 
         print(df)
+
+    for entry in range(len(performance)):
+        date_time = performance[entry].get("date_time")
+        #print(date_time)
+        impl = performance[entry].get("impl")
+        #print(impl)
+        batch_size = performance[entry].get("bch_sz")
+        #print(batch_size)
+        accuracy = performance[entry].get("accuracy")
+        #print(accuracy)
+        cpu_time = performance[entry].get("cpu_time [s]")
+        #print(cpu_time)
+        cpu_lat = performance[entry].get("cpu_lat [ms]")
+        #print(cpu_lat)
+        gpu_time = performance[entry].get("gpu_time [s]")
+        #print(gpu_time)
+        gpu_lat = performance[entry].get("gpu_lat [ms]")
+        #print(gpu_lat)
+
+        path_folder_csv = "profiles/csv/" + str(date_time) + "/" + str(impl)
+        if not os.path.exists(path_folder_csv):
+            os.makedirs(path_folder_csv)
+        
+        path_csv = "profiles/csv/" + str(date_time) + "/" + str(impl) + "/timings_" + str(impl) + "_" + str(batch_size) + ".csv"
+
+        # open the file in the write mode
+        with open(path_csv, 'w') as f:
+            # create the csv writer
+            writer = csv.writer(f)
+
+            header = ['batch_size', 'layer_nr', 'implem', 'cpu time [s]', 'gpu time [s]', 'total time [s]']
+            writer.writerow(header)
+
+            # write a row to the csv file
+            for i in range(len(performance[entry].get("layers"))):
+                writer.writerow(performance[entry].get("layers")[i])
+
 
 if __name__ == '__main__':
     main()

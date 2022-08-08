@@ -110,7 +110,13 @@ class Model():
         
         to_implementation = dynamic_import("fastinference.implementations.{}.{}.implement".format(self.category,implementation_type), "to_implementation")
         
+<<<<<<< HEAD
         self_copy = copy.copy(self)
+=======
+        # on server copy.deepcopy(self) leads to ReferenceError: weakly-referenced object no longer exists
+        # use copy.copy(self)
+        self_copy = copy.deepcopy(self)
+>>>>>>> 8026e8985495976a42028b59237f702cb9dbf64a
         to_implementation(self_copy, out_path, out_name, **kwargs)
 
     def to_dict(self):

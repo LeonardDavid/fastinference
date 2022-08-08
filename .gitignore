@@ -11,3 +11,4 @@ docs/make.bat
 *.json
 __pycache__
 *.csv
+!testing.csv

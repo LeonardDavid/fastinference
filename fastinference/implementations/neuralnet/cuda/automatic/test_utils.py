@@ -411,7 +411,7 @@ def test_implementations(model, dataset, split, implementations, base_optimizers
 
     # set the batch size lower and upper bound (aka the powers of 2)
     b_l = 1
-    b_u = 10
+    b_u = 2
 
     for impl, bopt in itertools.product(implementations, base_optimizers):
         for batch_size in (2**p for p in range(b_l, b_u)): # batch_size incrementing in powers of 2

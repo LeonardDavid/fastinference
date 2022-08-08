@@ -12,21 +12,21 @@ Accuracy: 90.31 %
 Reference Accuracy: 90.31 %
 
 Difference: -2.44141e-06
-90.31,90.31,-2.44141e-06,971
+90.31,90.31,-2.44141e-06,825
 
-Total CPU time: 0.97 [s] => Latency: 0.10 [ms/elem]
+Total CPU time: 0.83 [s] => Latency: 0.08 [ms/elem]
 Total GPU time: 0.00 [s] => Latency: 0.00 [ms/elem]
 
  Layer  0 time:       0.00[s], Ratio:    0.00% => kernel:       0.00[s], kRatio:    -nan%
- Layer  1 time:       0.22[s], Ratio:   22.72% => kernel:       0.00[s], kRatio:    -nan%
- Layer  2 time:       0.32[s], Ratio:   33.20% => kernel:       0.00[s], kRatio:    -nan%
- Layer  3 time:       0.00[s], Ratio:    0.16% => kernel:       0.00[s], kRatio:    -nan%
- Layer  4 time:       0.30[s], Ratio:   30.62% => kernel:       0.00[s], kRatio:    -nan%
- Layer  5 time:       0.12[s], Ratio:   12.51% => kernel:       0.00[s], kRatio:    -nan%
- Layer  6 time:       0.00[s], Ratio:    0.03% => kernel:       0.00[s], kRatio:    -nan%
+ Layer  1 time:       0.14[s], Ratio:   16.97% => kernel:       0.00[s], kRatio:    -nan%
+ Layer  2 time:       0.28[s], Ratio:   33.73% => kernel:       0.00[s], kRatio:    -nan%
+ Layer  3 time:       0.00[s], Ratio:    0.21% => kernel:       0.00[s], kRatio:    -nan%
+ Layer  4 time:       0.31[s], Ratio:   37.66% => kernel:       0.00[s], kRatio:    -nan%
+ Layer  5 time:       0.09[s], Ratio:   10.66% => kernel:       0.00[s], kRatio:    -nan%
+ Layer  6 time:       0.00[s], Ratio:    0.02% => kernel:       0.00[s], kRatio:    -nan%
  Layer  7 time:       0.00[s], Ratio:    0.00% => kernel:       0.00[s], kRatio:    -nan%
- Layer  8 time:       0.01[s], Ratio:    0.61% => kernel:       0.00[s], kRatio:    -nan%
- Layer  9 time:       0.00[s], Ratio:    0.15% => kernel:       0.00[s], kRatio:    -nan%
+ Layer  8 time:       0.01[s], Ratio:    0.62% => kernel:       0.00[s], kRatio:    -nan%
+ Layer  9 time:       0.00[s], Ratio:    0.12% => kernel:       0.00[s], kRatio:    -nan%
  Layer 10 time:       0.00[s], Ratio:    0.01% => kernel:       0.00[s], kRatio:    -nan%
 
-Total time: 0.97s
+Total time: 0.82s

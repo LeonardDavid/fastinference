@@ -16,8 +16,8 @@ from sklearn.linear_model import RidgeClassifier
 
 from sklearn.tree import DecisionTreeClassifier
 
-from ... import Loader
-#import fastinference.Loader
+#from ... import Loader
+import fastinference.Loader
 
 from sklearn.metrics import accuracy_score
 from sklearn.ensemble import BaggingClassifier

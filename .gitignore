@@ -9,6 +9,7 @@ docs/make.bat
 #docs/html
 /*.egg-info
 *.json
+!cudatest.json
 __pycache__
 *.csv
 !testing.csv

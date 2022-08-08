@@ -110,7 +110,7 @@ class Model():
         
         to_implementation = dynamic_import("fastinference.implementations.{}.{}.implement".format(self.category,implementation_type), "to_implementation")
         
-        self_copy = copy.deepcopy(self)
+        self_copy = copy.copy(self)
         to_implementation(self_copy, out_path, out_name, **kwargs)
 
     def to_dict(self):

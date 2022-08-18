@@ -6,6 +6,7 @@ import pandas as pd
 import argparse
 import csv
 
+from datetime import datetime
 from timeit import default_timer as timer
 from torch import optim
 from test_utils import get_dataset, prepare_fastinference, run_experiment, make_hash, test_implementations
@@ -33,7 +34,7 @@ def main():
     # XTrain, YTrain, _, _ = get_dataset(args.dataset,split=args.split)
 
     implementations = [ 
-        ("cpu",{"label_type":"int"},{"feature_type":"int"}),
+        # ("cpu",{"label_type":"int"},{"feature_type":"int"}),
         ("x",{"label_type":"int"},{"feature_type":"int"}),
         ("y",{"label_type":"int"},{"feature_type":"int"}),
         ("z",{"label_type":"int"},{"feature_type":"int"}),
@@ -42,6 +43,9 @@ def main():
         ("yz",{"label_type":"int"},{"feature_type":"int"}),
         ("xyz",{"label_type":"int"},{"feature_type":"int"})
     ]
+
+    out_path = args.outpath
+    now = datetime.now().strftime('%d-%m-%y_%H-%M-%S')
 
     # if args.nestimators <= 1:
     #     model = DecisionTreeClassifier(max_depth=args.maxdepth)
@@ -67,12 +71,18 @@ def main():
     #     ]
 
     start = timer()
-    performance = test_implementations(model = model, dataset= args.dataset, split = args.split, implementations = implementations, base_optimizers = base_optimizers, out_path = args.outpath, model_name = args.modelname, impl_folder = impl_folder)
+    performance = test_implementations(model = model, dataset= args.dataset, split = args.split, implementations = implementations, now = now, base_optimizers = base_optimizers, out_path = out_path, model_name = args.modelname, impl_folder = impl_folder)
     end = timer()
 
+    profile_path = os.path.abspath(os.path.join(out_path, "../../..", "profiles/results", now))
+    if not os.path.exists(profile_path):
+        os.makedirs(profile_path)
+    
     df = pd.DataFrame(performance)
     with pd.option_context('display.max_rows', None): 
         print(df)
+        with open(profile_path + "/all.txt", 'a') as f:
+            f.write(str(df))
     
     print("\n")
     print("Total runtime including script: %.3fs" % (end-start))

@@ -13,3 +13,4 @@ docs/make.bat
 __pycache__
 *.csv
 !testing.csv
+tmp/fastinference/cuda_auto

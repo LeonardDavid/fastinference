@@ -375,7 +375,7 @@ def prepare_fastinference(model_path, out_path, batch_size, impl_folder, impleme
 
     return nr_layers # return number of layers to be used in main.cpp
 
-def test_implementations(model, dataset, split, implementations, base_optimizers = [([None], [{}])], out_path = ".", model_name="Model", impl_folder = "cuda", n_repeat=1):
+def test_implementations(model, dataset, split, implementations, now, base_optimizers = [([None], [{}])], out_path = ".", model_name="Model", impl_folder = "cuda", n_repeat=1):
     print("Loading {}".format(dataset))
     #XTrain, YTrain, XTest, YTest = get_dataset(dataset,out_path,split)
 
@@ -407,8 +407,6 @@ def test_implementations(model, dataset, split, implementations, base_optimizers
     print(implementations)
     print(base_optimizers)
     print('\n')
-
-    now = datetime.now().strftime('%d-%m-%y_%H-%M-%S')
 
     # set the batch size lower and upper bound (aka the powers of 2)
     b_l = 1

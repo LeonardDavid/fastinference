@@ -14,3 +14,4 @@ __pycache__
 *.csv
 !testing.csv
 tmp/fastinference/cuda_auto
+profiles/

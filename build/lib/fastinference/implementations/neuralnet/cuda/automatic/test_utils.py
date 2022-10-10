@@ -397,10 +397,18 @@ def test_implementations(model, dataset, split, implementations, now, base_optim
     #path_to_testfile = os.path.join(out_path, "testing.csv")
     #dfTest.to_csv(path_to_testfile, header=True, index=False)
 
-    # path_to_testfile = os.path.join("fastinference/implementations/neuralnet/cuda/automatic/test_data/testing.csv")
-    # path_to_model = os.path.join("fastinference/implementations/neuralnet/cuda/automatic/test_model/cudatest.onnx")
-    path_to_testfile = os.path.join("fastinference/implementations/neuralnet/cuda/automatic/data/fashion/testing.csv")
-    path_to_model = os.path.join("fastinference/implementations/neuralnet/cuda/automatic/model/fashion/model_fashion.onnx")
+    ## (mnist) test data and model 
+    # path_to_testfile = os.path.join("fastinference/implementations/neuralnet/cuda/automatic/data/test_data/testing.csv")
+    # path_to_model = os.path.join("fastinference/implementations/neuralnet/cuda/automatic/model/test_model/cudatest.onnx")
+
+    ## fashion data and model
+    # path_to_testfile = os.path.join("fastinference/implementations/neuralnet/cuda/automatic/data/fashion/testing.csv")
+    # path_to_model = os.path.join("fastinference/implementations/neuralnet/cuda/automatic/model/fashion/model_fashion.onnx")
+
+    ## cifar10 data and model
+    path_to_testfile = os.path.join("fastinference/implementations/neuralnet/cuda/automatic/data/cifar10_test/testing.csv")
+    path_to_model = os.path.join("fastinference/implementations/neuralnet/cuda/automatic/model/cifar10_test/model_cifar10.onnx")
+
     print(path_to_testfile)
     print(path_to_model)
     print('\n')

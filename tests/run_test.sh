@@ -84,40 +84,40 @@ done
 
 OUTPATH=$OUTPATH/$MODELNAME
 
-if [ "$GENERATE_DATA" == "true" ]; then
-    mkdir -p $OUTPATH
-    if [ "$TYPE" = "cnn" ]; then
-        if [ "$BINARIZE" == "on" ]; then
-            python3 tests/data/generate_cifar.py --out $OUTPATH
-        else
-            python3 tests/data/generate_cifar.py --out $OUTPATH --float
-        fi
-    else
-        if [ "$BINARIZE" == "on" ]; then
-            python3 tests/data/generate_data.py --out $OUTPATH --nclasses $NCLASSES --nfeatures $NFEATURES --difficulty $DIFFICULTY --nexamples $NEXAMPLES
-        else
-            python3 tests/data/generate_data.py --out $OUTPATH --nclasses $NCLASSES --nfeatures $NFEATURES --difficulty $DIFFICULTY --nexamples $NEXAMPLES --float
-        fi
-    fi
+# if [ "$GENERATE_DATA" == "true" ]; then
+#     mkdir -p $OUTPATH
+#     if [ "$TYPE" = "cnn" ]; then
+#         if [ "$BINARIZE" == "on" ]; then
+#             python3 tests/data/generate_cifar.py --out $OUTPATH
+#         else
+#             python3 tests/data/generate_cifar.py --out $OUTPATH --float
+#         fi
+#     else
+#         if [ "$BINARIZE" == "on" ]; then
+#             python3 tests/data/generate_data.py --out $OUTPATH --nclasses $NCLASSES --nfeatures $NFEATURES --difficulty $DIFFICULTY --nexamples $NEXAMPLES
+#         else
+#             python3 tests/data/generate_data.py --out $OUTPATH --nclasses $NCLASSES --nfeatures $NFEATURES --difficulty $DIFFICULTY --nexamples $NEXAMPLES --float
+#         fi
+#     fi
 
-    if [ "$TYPE" = "mlp" ] || [ "$TYPE" = "cnn" ]; then
-        if [ "$BINARIZE" == "on" ]; then
-            python3 tests/train_cifar_$TYPE.py --training $OUTPATH/training.csv --testing $OUTPATH/testing.csv --out $OUTPATH --name $MODELNAME --binarize
-        else
-            python3 tests/train_cifar_$TYPE.py --training $OUTPATH/training.csv --testing $OUTPATH/testing.csv --out $OUTPATH --name $MODELNAME 
-        fi
-        ENDING="onnx"
-    else
-        python3 tests/train_$TYPE.py --training $OUTPATH/training.csv --testing $OUTPATH/testing.csv --out $OUTPATH --name $MODELNAME  --nestimators $NESTIMATORS 
-        ENDING="json"
-    fi
-else
-    if [ "$TYPE" = "mlp" ] || [ "$TYPE" = "cnn" ]; then
-        ENDING="onnx"
-    else
-        ENDING="json"
-    fi
-fi
+#     if [ "$TYPE" = "mlp" ] || [ "$TYPE" = "cnn" ]; then
+#         if [ "$BINARIZE" == "on" ]; then
+#             python3 tests/train_cifar_$TYPE.py --training $OUTPATH/training.csv --testing $OUTPATH/testing.csv --out $OUTPATH --name $MODELNAME --binarize
+#         else
+#             python3 tests/train_cifar_$TYPE.py --training $OUTPATH/training.csv --testing $OUTPATH/testing.csv --out $OUTPATH --name $MODELNAME 
+#         fi
+#         ENDING="onnx"
+#     else
+#         python3 tests/train_$TYPE.py --training $OUTPATH/training.csv --testing $OUTPATH/testing.csv --out $OUTPATH --name $MODELNAME  --nestimators $NESTIMATORS 
+#         ENDING="json"
+#     fi
+# else
+#     if [ "$TYPE" = "mlp" ] || [ "$TYPE" = "cnn" ]; then
+#         ENDING="onnx"
+#     else
+#         ENDING="json"
+#     fi
+# fi
 
 # if [ "$TYPE" = "mlp" ] || [ "$TYPE" = "cnn" ]; then
 #     if [ "$BINARIZE" == "on" ]; then

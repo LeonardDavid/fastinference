@@ -166,51 +166,20 @@ class SimpleCNN(pl.LightningModule):
             # self.out = BinaryLinear(32, 10)
         else:
             print("#####################################")
-
-            self.conv1_1 = nn.Conv2d(3, 128, 3, 1, 1)
-            self.bn_1 = nn.BatchNorm2d(128)
+            self.conv1 = nn.Conv2d(1, 32, 3, 1)
+            self.bn_1 = nn.BatchNorm2d(32)
             self.activation_1 = nn.ReLU()
-            self.conv1_2 = nn.Conv2d(128, 128, 3, 1, 1)
-            self.pool_1 = nn.MaxPool2d(2,2)
-            self.bn_2 = nn.BatchNorm2d(128)
+            self.pool_1 = nn.MaxPool2d(2)
+
+            self.conv2 = nn.Conv2d(32, 32, 3, 1)
+            self.bn_2 = nn.BatchNorm2d(32)
             self.activation_2 = nn.ReLU()
+            self.pool_2 = nn.MaxPool2d(2)
 
-            self.conv2_1 = nn.Conv2d(128, 256, 3, 1, 1)
-            self.bn_3 = nn.BatchNorm2d(256)
-            self.activation_3 = nn.ReLU()
-            self.conv2_2 = nn.Conv2d(256, 256, 3, 1, 1)
-            self.pool_2 = nn.MaxPool2d(2,2)
-            self.bn_4 = nn.BatchNorm2d(256)
-            self.activation_4 = nn.ReLU()
-
-            self.conv3_1 = nn.Conv2d(256, 512, 3, 1, 1)
-            self.bn_5 = nn.BatchNorm2d(512)
-            self.activation_5 = nn.ReLU()
-            self.conv3_2 = nn.Conv2d(512, 512, 3, 1, 1)
-            self.pool_3 = nn.MaxPool2d(2,2)
-            self.bn_6 = nn.BatchNorm2d(512)
-            self.activation_6 = nn.ReLU()
-
-            self.fc_1 = torch.nn.Linear(512 * 4 * 4, 512)
-            self.bn = nn.BatchNorm1d(512)
+            self.fc_1 = torch.nn.Linear(32 * 5 * 5, 32)
+            self.bn = nn.BatchNorm1d(32)
             self.activation = nn.ReLU()
-            self.out = torch.nn.Linear(512, 10)
-
-            ############################################
-            # self.conv1 = nn.Conv2d(1, 32, 3, 1)
-            # self.bn_1 = nn.BatchNorm2d(32)
-            # self.activation_1 = nn.ReLU()
-            # self.pool_1 = nn.MaxPool2d(2)
-
-            # self.conv2 = nn.Conv2d(32, 32, 3, 1)
-            # self.bn_2 = nn.BatchNorm2d(32)
-            # self.activation_2 = nn.ReLU()
-            # self.pool_2 = nn.MaxPool2d(2)
-
-            # self.fc_1 = torch.nn.Linear(32 * 5 * 5, 32)
-            # self.bn = nn.BatchNorm1d(32)
-            # self.activation = nn.ReLU()
-            # self.out = torch.nn.Linear(32, 10)
+            self.out = torch.nn.Linear(32, 10)
 
     def forward(self, x):
         batch_size = x.shape[0]

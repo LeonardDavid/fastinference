@@ -5,6 +5,8 @@ set(CMAKE_DEPENDS_LANGUAGES
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_CXX
   "/mnt/c/Users/leona/projects/tu-dortmund/fastinference/tests/main.cpp" "/mnt/c/Users/leona/projects/tu-dortmund/fastinference/CMakeFiles/testCode.dir/main.cpp.o"
+  "/mnt/c/Users/leona/projects/tu-dortmund/fastinference/tests/main_batches.cpp" "/mnt/c/Users/leona/projects/tu-dortmund/fastinference/CMakeFiles/testCode.dir/main_batches.cpp.o"
+  "/mnt/c/Users/leona/projects/tu-dortmund/fastinference/tests/main_test.cpp" "/mnt/c/Users/leona/projects/tu-dortmund/fastinference/CMakeFiles/testCode.dir/main_test.cpp.o"
   )
 set(CMAKE_CXX_COMPILER_ID "GNU")
 

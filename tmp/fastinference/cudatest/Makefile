@@ -196,33 +196,6 @@ model.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/testCode.dir/build.make CMakeFiles/testCode.dir/model.cpp.s
 .PHONY : model.cpp.s
 
-model.o: model.cu.o
-
-.PHONY : model.o
-
-# target to build an object file
-model.cu.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/testCode.dir/build.make CMakeFiles/testCode.dir/model.cu.o
-.PHONY : model.cu.o
-
-model.i: model.cu.i
-
-.PHONY : model.i
-
-# target to preprocess a source file
-model.cu.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/testCode.dir/build.make CMakeFiles/testCode.dir/model.cu.i
-.PHONY : model.cu.i
-
-model.s: model.cu.s
-
-.PHONY : model.s
-
-# target to generate assembly for a file
-model.cu.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/testCode.dir/build.make CMakeFiles/testCode.dir/model.cu.s
-.PHONY : model.cu.s
-
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -235,9 +208,6 @@ help:
 	@echo "... main.o"
 	@echo "... main.i"
 	@echo "... main.s"
-	@echo "... model.o"
-	@echo "... model.i"
-	@echo "... model.s"
 	@echo "... model.o"
 	@echo "... model.i"
 	@echo "... model.s"

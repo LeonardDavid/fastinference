@@ -93,10 +93,10 @@ auto benchmark(std::vector<std::vector<FEATURE_TYPE>> &X, std::vector<unsigned i
 	f<<std::endl;
 
 	float total_kernel_time = 0;
-	
+	// std::cout<<1<<std::endl;
 	float * ln_times = new float[2*NR_LAYERS+1];
 	std::fill(ln_times, ln_times+(2*NR_LAYERS+1), 0);
-
+	// std::cout<<2<<std::endl;
     auto start = std::chrono::high_resolution_clock::now();
     for (unsigned int k = 0; k < repeat; ++k) {
     	matches = 0;
@@ -105,7 +105,7 @@ auto benchmark(std::vector<std::vector<FEATURE_TYPE>> &X, std::vector<unsigned i
 	        std::fill(output, output+N_CLASSES*BATCH_SIZE, 0);
 			// TODO make label as array for multiple batches
 	        unsigned int label[BATCH_SIZE];
-
+			// std::cout<<3<<std::endl;
 	        // Note: To make this code more universially applicable we define predict to be the correct function
 	        //       which is given in the command line argument. For example, a RidgeClassifier is compiled with
 	        //          cmake . -DMODEL_NAME=RidgeClassifier
@@ -116,7 +116,7 @@ auto benchmark(std::vector<std::vector<FEATURE_TYPE>> &X, std::vector<unsigned i
 
 			// FEATURE_TYPE const * const x = &X[i][0];
 			FEATURE_TYPE x[BATCH_SIZE][imgsize];
-
+			// std::cout<<4<<std::endl;
 			size_t BSIZE = (b == xsize/BATCH_SIZE) ? (xsize % BATCH_SIZE) : BATCH_SIZE;
 			//std::cout<<b<<" "<<BSIZE<<" "<<std::endl;
 			for(size_t i=0; i<BSIZE; i++){
@@ -125,9 +125,9 @@ auto benchmark(std::vector<std::vector<FEATURE_TYPE>> &X, std::vector<unsigned i
 				}
 				label[i] = Y[b*BATCH_SIZE + i];
 			}
-			
-			predict_cudatest(&x[0][0], output, ln_times);
-			
+			// std::cout<<5<<std::endl;
+			predict_cudamodel(&x[0][0], output, ln_times);
+			// std::cout<<6<<std::endl;
 			// first value is the total kernel time
 			total_kernel_time += ln_times[0];
 			
@@ -136,7 +136,7 @@ auto benchmark(std::vector<std::vector<FEATURE_TYPE>> &X, std::vector<unsigned i
 			for(int i = 1; i < NR_LAYERS+1; i++){
 				ln_total[j++] += ln_times[i];
 			}
-
+			// std::cout<<7<<std::endl;
 			// next NR_LAYERS values are GPU kernel times for individual layers
 			j = 0;
 			for(int i = NR_LAYERS+1; i < 2*NR_LAYERS+1; i++){
@@ -150,7 +150,7 @@ auto benchmark(std::vector<std::vector<FEATURE_TYPE>> &X, std::vector<unsigned i
 			// 	std::cout<<std::endl;
 			// }
 			// std::cout<<std::endl;
-
+			// std::cout<<8<<std::endl;
 			if constexpr (N_CLASSES >= 2) {
 				for(unsigned int i = 0; i < BSIZE; i++){
 					LABEL_TYPE max = output[i*N_CLASSES];

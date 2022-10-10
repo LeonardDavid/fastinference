@@ -45,7 +45,7 @@ for(int b = 0; b < {{batch_size}}; b++){
                   {% if prev_layer_is_step == true %}
                   cuda_layer_{{ layer_id }}_output[index4D(b,h,w,m,{{ layer.output_shape[2] }},{{ layer.output_shape[3] }},{{ layer.output_shape[1] }})] += 2 * {{ popcount }}(({{ uint_type }})~({{ uint_type }})(layer_{{ layer_id }}_weight[kH][kW][m][c] ^ layer_{{ layer_id - 1 }}_output[b][iH][iW][c])) - {{ binary_word_size }};
                   {% else %}
-                  // cuda_layer_{{ layer_id }}_output[index4D(b,h,w,m,{{ layer.output_shape[2] }},{{ layer.output_shape[3] }},{{ layer.output_shape[1] }})] += 2 * {{ popcount }}(({{ uint_type }})~({{ uint_type }})(layer_{{ layer_id }}_weight[kH][kW][m][c] ^ cuda_layer_{{ layer_id - 1 }}_output[index4D(b,iH,iW,c,{{ layer.input_shape[2] }},{{ layer.input_shape[3] }},{{ (layer.input_shape[1] / binary_word_size)|round(method='ceil')|int }})])) - {{ binary_word_size }};
+                  cuda_layer_{{ layer_id }}_output[index4D(b,h,w,m,{{ layer.output_shape[2] }},{{ layer.output_shape[3] }},{{ layer.output_shape[1] }})] += 2 * {{ popcount }}(({{ uint_type }})~({{ uint_type }})(layer_{{ layer_id }}_weight[kH][kW][m][c] ^ cuda_layer_{{ layer_id - 1 }}_output[index4D(b,iH,iW,c,{{ layer.input_shape[2] }},{{ layer.input_shape[3] }},{{ (layer.input_shape[1] / binary_word_size)|round(method='ceil')|int }})])) - {{ binary_word_size }};
                   {% endif %}
                 }
               }

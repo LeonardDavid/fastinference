@@ -34,7 +34,7 @@ def main():
     # XTrain, YTrain, _, _ = get_dataset(args.dataset,split=args.split)
 
     implementations = [ 
-        ("cpu",{"label_type":"int"},{"feature_type":"int"}),
+        # ("cpu",{"label_type":"int"},{"feature_type":"int"}),
         # ("x",{"label_type":"int"},{"feature_type":"int"}),
         # ("y",{"label_type":"int"},{"feature_type":"int"}),
         # ("z",{"label_type":"int"},{"feature_type":"int"}),

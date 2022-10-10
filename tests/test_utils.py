@@ -309,8 +309,8 @@ def prepare_fastinference(model_path, out_path, implementation_type, implementat
         fi_model.implement(out_path, "model", "cpp.{}".format(implementation_type), **implementation_args)
     
     prepare_and_compile = """
-    cp ./main.cpp {outpath} && 
-    cp ./CMakeLists.txt {outpath}
+    cp tests/main.cpp {outpath} && 
+    cp tests/CMakeLists.txt {outpath}
     """.replace("{outpath}", out_path).replace("{name}", fi_model.name).replace("{feature_type}", "double")
     
     print("Calling {}".format(prepare_and_compile))

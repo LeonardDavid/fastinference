@@ -1,0 +1,3 @@
+/mnt/c/Users/leona/projects/tu-dortmund/fastinference/tmp/fastinference/cnntest_fashion/CMakeFiles/rebuild_cache.dir
+/mnt/c/Users/leona/projects/tu-dortmund/fastinference/tmp/fastinference/cnntest_fashion/CMakeFiles/edit_cache.dir
+/mnt/c/Users/leona/projects/tu-dortmund/fastinference/tmp/fastinference/cnntest_fashion/CMakeFiles/testCode.dir

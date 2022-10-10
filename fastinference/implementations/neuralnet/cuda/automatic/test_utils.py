@@ -397,8 +397,18 @@ def test_implementations(model, dataset, split, implementations, now, base_optim
     #path_to_testfile = os.path.join(out_path, "testing.csv")
     #dfTest.to_csv(path_to_testfile, header=True, index=False)
 
-    path_to_testfile = os.path.join("fastinference/implementations/neuralnet/cuda/automatic/test_data/testing.csv")
-    path_to_model = os.path.join("fastinference/implementations/neuralnet/cuda/automatic/test_model/cudatest.onnx")
+    ## (mnist) test data and model 
+    # path_to_testfile = os.path.join("fastinference/implementations/neuralnet/cuda/automatic/data/test_data/testing.csv")
+    # path_to_model = os.path.join("fastinference/implementations/neuralnet/cuda/automatic/model/test_model/cudatest.onnx")
+
+    ## fashion data and model
+    # path_to_testfile = os.path.join("fastinference/implementations/neuralnet/cuda/automatic/data/fashion/testing.csv")
+    # path_to_model = os.path.join("fastinference/implementations/neuralnet/cuda/automatic/model/fashion/model_fashion.onnx")
+
+    ## cifar10 data and model
+    path_to_testfile = os.path.join("fastinference/implementations/neuralnet/cuda/automatic/data/cifar10_test/testing.csv")
+    path_to_model = os.path.join("fastinference/implementations/neuralnet/cuda/automatic/model/cifar10_test/model_cifar10.onnx")
+
     print(path_to_testfile)
     print(path_to_model)
     print('\n')
@@ -410,7 +420,7 @@ def test_implementations(model, dataset, split, implementations, now, base_optim
 
     # set the batch size lower and upper bound (aka the powers of 2)
     b_l = 1
-    b_u = 10
+    b_u = 2
 
     for impl, bopt in itertools.product(implementations, base_optimizers):
         for batch_size in (2**p for p in range(b_l, b_u)): # batch_size incrementing in powers of 2
@@ -597,12 +607,14 @@ def test_implementations(model, dataset, split, implementations, now, base_optim
         print("\n")
         f.write("\n")
 
+    # optimal_batch_size = 2
     out_path_ext = os.path.join(out_path, now, model_name + "/automatic/" + str(optimal_batch_size))
     impl_type = "automatic"
     impl_args = {}
     impl_args["label_type"] = "int"
     impl_args["batch_size"] = optimal_batch_size
-    #impl_args["opt_impl"] = ['xyz', 'xyz', 'cpu', 'cpu', 'cpu', 'cpu', 'cpu', 'cpu', 'cpu', 'cpu', 'yz']
+    # impl_args["opt_impl"] = ['xyz', 'xyz', 'cpu', 'cpu', 'cpu', 'cpu', 'cpu', 'cpu', 'cpu', 'cpu', 'yz']
+    # impl_args["opt_impl"] = ['cpu', 'cpu', 'cpu', 'cpu', 'cpu', 'cpu', 'cpu', 'cpu', 'xyz', 'cpu', 'cpu']
     impl_args["opt_impl"] = implem
 
     # print(impl_args["opt_impl"])
@@ -626,9 +638,9 @@ def test_implementations(model, dataset, split, implementations, now, base_optim
 
     time_auto = performance[len(performance)-1].get("total_time [s]")
 
-    print("\n")
-    print("Total runtime of every implementation (excl. auto): %.3fs\n" % time_all)
-    print("\n")
-    print("Total runtime of every implementation (incl. auto): %.3fs\n" % (time_all + time_auto))
+    # print("\n")
+    # print("Total runtime of every implementation (excl. auto): %.3fs\n" % time_all)
+    # print("\n")
+    # print("Total runtime of every implementation (incl. auto): %.3fs\n" % (time_all + time_auto))
 
     return performance

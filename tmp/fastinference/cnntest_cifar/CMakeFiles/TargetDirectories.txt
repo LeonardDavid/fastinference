@@ -1,0 +1,3 @@
+/mnt/c/Users/leona/projects/tu-dortmund/fastinference/tmp/fastinference/cnntest_cifar/CMakeFiles/rebuild_cache.dir
+/mnt/c/Users/leona/projects/tu-dortmund/fastinference/tmp/fastinference/cnntest_cifar/CMakeFiles/edit_cache.dir
+/mnt/c/Users/leona/projects/tu-dortmund/fastinference/tmp/fastinference/cnntest_cifar/CMakeFiles/testCode.dir

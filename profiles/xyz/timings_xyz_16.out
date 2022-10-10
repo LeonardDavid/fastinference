@@ -12,21 +12,21 @@ Accuracy: 90.31 %
 Reference Accuracy: 90.31 %
 
 Difference: -2.44141e-06
-90.31,90.31,-2.44141e-06,5010.67
+90.31,90.31,-2.44141e-06,4719.27
 
-Total CPU time: 5.01 [s] => Latency: 0.50 [ms/elem]
+Total CPU time: 4.72 [s] => Latency: 0.47 [ms/elem]
 Total GPU time: 1.52 [s] => Latency: 0.15 [ms/elem]
 
  Layer  0 time:       0.00[s], Ratio:    0.00% => kernel:       0.00[s], kRatio:    0.00%
- Layer  1 time:       1.57[s], Ratio:   31.40% => kernel:       1.32[s], kRatio:   86.74%
- Layer  2 time:       0.39[s], Ratio:    7.86% => kernel:       0.00[s], kRatio:    0.00%
- Layer  3 time:       0.69[s], Ratio:   13.80% => kernel:       0.03[s], kRatio:    1.94%
- Layer  4 time:       0.63[s], Ratio:   12.58% => kernel:       0.09[s], kRatio:    6.00%
- Layer  5 time:       0.13[s], Ratio:    2.63% => kernel:       0.00[s], kRatio:    0.00%
- Layer  6 time:       0.50[s], Ratio:   10.09% => kernel:       0.03[s], kRatio:    2.19%
+ Layer  1 time:       1.24[s], Ratio:   26.24% => kernel:       1.32[s], kRatio:   86.77%
+ Layer  2 time:       0.39[s], Ratio:    8.36% => kernel:       0.00[s], kRatio:    0.00%
+ Layer  3 time:       0.69[s], Ratio:   14.61% => kernel:       0.03[s], kRatio:    1.91%
+ Layer  4 time:       0.63[s], Ratio:   13.43% => kernel:       0.09[s], kRatio:    5.95%
+ Layer  5 time:       0.13[s], Ratio:    2.80% => kernel:       0.00[s], kRatio:    0.00%
+ Layer  6 time:       0.51[s], Ratio:   10.91% => kernel:       0.03[s], kRatio:    2.09%
  Layer  7 time:       0.00[s], Ratio:    0.00% => kernel:       0.00[s], kRatio:    0.00%
- Layer  8 time:       0.55[s], Ratio:   11.05% => kernel:       0.03[s], kRatio:    2.20%
+ Layer  8 time:       0.57[s], Ratio:   12.02% => kernel:       0.03[s], kRatio:    2.23%
  Layer  9 time:       0.00[s], Ratio:    0.03% => kernel:       0.00[s], kRatio:    0.00%
- Layer 10 time:       0.53[s], Ratio:   10.56% => kernel:       0.01[s], kRatio:    0.93%
+ Layer 10 time:       0.55[s], Ratio:   11.60% => kernel:       0.02[s], kRatio:    1.04%
 
-Total time: 6.53s
+Total time: 6.23s

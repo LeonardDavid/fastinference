@@ -3,3 +3,7 @@
 
 CMakeFiles/testCode.dir/main.cpp.o: tests/main.cpp
 
+CMakeFiles/testCode.dir/main_batches.cpp.o: tests/main_batches.cpp
+
+CMakeFiles/testCode.dir/main_test.cpp.o: tests/main_test.cpp
+

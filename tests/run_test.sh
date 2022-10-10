@@ -68,6 +68,10 @@ case $i in
     GENERATE_DATA="${i#*=}"
     shift # past argument=value
     ;;
+    --train_data=*)
+    TRAIN_DATA="${i#*=}"
+    shift # past argument=value
+    ;;
     --batch_size=*)
     BATCH_SIZE="${i#*=}"
     shift # past argument=value
@@ -84,9 +88,9 @@ if [ "$GENERATE_DATA" == "true" ]; then
     mkdir -p $OUTPATH
     if [ "$TYPE" = "cnn" ]; then
         if [ "$BINARIZE" == "on" ]; then
-            python3 tests/data/generate_mnist.py --out $OUTPATH
+            python3 tests/data/generate_cifar.py --out $OUTPATH
         else
-            python3 tests/data/generate_mnist.py --out $OUTPATH --float
+            python3 tests/data/generate_cifar.py --out $OUTPATH --float
         fi
     else
         if [ "$BINARIZE" == "on" ]; then
@@ -98,9 +102,9 @@ if [ "$GENERATE_DATA" == "true" ]; then
 
     if [ "$TYPE" = "mlp" ] || [ "$TYPE" = "cnn" ]; then
         if [ "$BINARIZE" == "on" ]; then
-            python3 tests/train_$TYPE.py --training $OUTPATH/training.csv --testing $OUTPATH/testing.csv --out $OUTPATH --name $MODELNAME --binarize
+            python3 tests/train_cifar_$TYPE.py --training $OUTPATH/training.csv --testing $OUTPATH/testing.csv --out $OUTPATH --name $MODELNAME --binarize
         else
-            python3 tests/train_$TYPE.py --training $OUTPATH/training.csv --testing $OUTPATH/testing.csv --out $OUTPATH --name $MODELNAME 
+            python3 tests/train_cifar_$TYPE.py --training $OUTPATH/training.csv --testing $OUTPATH/testing.csv --out $OUTPATH --name $MODELNAME 
         fi
         ENDING="onnx"
     else
@@ -115,13 +119,28 @@ else
     fi
 fi
 
+# if [ "$TYPE" = "mlp" ] || [ "$TYPE" = "cnn" ]; then
+#     if [ "$BINARIZE" == "on" ]; then
+#         python3 tests/train_cifar_$TYPE.py --training $OUTPATH/training.csv --testing $OUTPATH/testing.csv --out $OUTPATH --name $MODELNAME --binarize
+#     else
+#         python3 tests/train_cifar_$TYPE.py --training $OUTPATH/training.csv --testing $OUTPATH/testing.csv --out $OUTPATH --name $MODELNAME 
+#     fi
+#     ENDING="onnx"
+# else
+#     python3 tests/train_$TYPE.py --training $OUTPATH/training.csv --testing $OUTPATH/testing.csv --out $OUTPATH --name $MODELNAME  --nestimators $NESTIMATORS 
+#     ENDING="json"
+# fi
+
+ENDING="onnx"
 if [ "$BINARIZE" == "on" ]; then
     FEATURE_TYPE="int"
+    LABEL_TYPE="int"
 else
     FEATURE_TYPE="double"
+    LABEL_TYPE="double"
 fi
 
-python3 fastinference/main.py --model $OUTPATH/$MODELNAME.$ENDING --feature_type $FEATURE_TYPE --out_path $OUTPATH --out_name "model" $FIOPTIONS --implementation.batch_size $BATCH_SIZE
+python3 fastinference/main.py --model $OUTPATH/$MODELNAME.$ENDING --feature_type $FEATURE_TYPE --label_type $LABEL_TYPE --out_path $OUTPATH --out_name "model" $FIOPTIONS --implementation.batch_size $BATCH_SIZE
 python3 ./tests/data/convert_data.py --file $OUTPATH/testing.csv --out $OUTPATH/testing.h --dtype $FEATURE_TYPE --ltype "unsigned int"
 
 IMPLE=(${IMPLEM//./ })
@@ -131,6 +150,6 @@ IMPL="$Q${IMPLE[1]}$Q" # echoes "xyz" in order to send it as string to CMake -> 
 cp ./tests/main.cpp $OUTPATH
 cp ./tests/CMakeLists.txt $OUTPATH
 cd $OUTPATH
-cmake . -DMODELNAME=$MODELNAME -DFEATURE_TYPE=$FEATURE_TYPE -DBATCH_SIZE=$BATCH_SIZE -DIMPL=${IMPL}
+cmake . -DMODELNAME=$MODELNAME -DFEATURE_TYPE=$FEATURE_TYPE -DLABEL_TYPE=$LABEL_TYPE -DBATCH_SIZE=$BATCH_SIZE -DIMPL=${IMPL}
 make
 ./testCode testing.csv 1

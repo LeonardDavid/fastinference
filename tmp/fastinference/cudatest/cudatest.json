@@ -1,1 +1,1 @@
-{"accuracy": 90.31, "name": "cudatest", "batch-latency": 0.9415796999999999, "single-latency": 3.4799608999999996}
+{"accuracy": 89.25999999999999, "name": "cudatest", "batch-latency": 0.8625315, "single-latency": 3.3064529}

@@ -342,7 +342,7 @@ def eval_model(model, x_train, y_train, x_test, y_test, out_path, name):
     train_dataloader = DataLoader(TensorDataset(x_train_tensor, y_train_tensor), batch_size=64, num_workers=12)
     val_loader = None #DataLoader(TensorDataset(x_test_tensor, y_test_tensor), batch_size=64, num_workers=12)
 
-    trainer = pl.Trainer(max_epochs = 1, default_root_dir = out_path, progress_bar_refresh_rate = 1)
+    trainer = pl.Trainer(max_epochs = 5, default_root_dir = out_path) #, progress_bar_refresh_rate = 1)
     trainer.fit(model, train_dataloader, val_loader)
     model.eval() 
 

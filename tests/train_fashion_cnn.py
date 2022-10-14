@@ -83,11 +83,10 @@ class SimpleCNN(pl.LightningModule):
         if binarize:
             print("===================================")
             
-
-
             ############################################
             ## 64 neurons 1 padding 1 stride
             ##self.conv1 = BinaryConv2d(in_channels=1, out_channels=32, kernel_size=(3,3), stride=(1,1), padding=(1,1))
+
             self.conv1 = BinaryConv2d(1, 64, 3, 1, 1)
             self.bn_1 = nn.BatchNorm2d(64)
             self.activation_1 = BinaryTanh()
@@ -158,32 +157,34 @@ class SimpleCNN(pl.LightningModule):
         x = x.view((batch_size, 1, 28, 28))
 
         x = self.conv1(x)
-        x = self.pool_1(x)
         x = self.bn_1(x)
         x = self.activation_1(x)
+        x = self.pool_1(x)
 
         x = self.conv2(x)
-        x = self.pool_2(x)
         x = self.bn_2(x)
         x = self.activation_2(x)
-        
+        x = self.pool_2(x)
+
         x = x.view(batch_size, -1)
         x = self.fc_1(x)
         x = self.bn(x)
         x = self.activation(x)
         x = self.out(x)
         x = torch.log_softmax(x, dim=1)
-
+        
+        ###########################################
+        
         # x = self.conv1(x)
+        # x = self.pool_1(x)
         # x = self.bn_1(x)
         # x = self.activation_1(x)
-        # x = self.pool_1(x)
 
         # x = self.conv2(x)
+        # x = self.pool_2(x)
         # x = self.bn_2(x)
         # x = self.activation_2(x)
-        # x = self.pool_2(x)
-
+        
         # x = x.view(batch_size, -1)
         # x = self.fc_1(x)
         # x = self.bn(x)
@@ -214,9 +215,16 @@ class SimpleCNN(pl.LightningModule):
         return optimizer
 
     def predict(self, X):
-        print(X)
-        # return self.forward(torch.from_numpy(X).float()).argmax(axis=1) 
-        return np.ones(X.shape[0])
+        tmp = TensorDataset(torch.Tensor(X)) 
+        loader = DataLoader(tmp, batch_size=32) 
+
+        all_preds = []
+        for bdata in loader:
+            x = bdata[0]
+            preds =  self.forward(x.float()).argmax(axis=1)   
+            all_preds.append(np.array(preds))
+
+        return np.concatenate(all_preds)
 
     def on_epoch_start(self):
         print('\n')
@@ -268,7 +276,7 @@ def sanatize_onnx(model):
                 layer_new.bias.data = binarize(m.bias.data)
             layer_new.weight.data = binarize(m.weight.data)
             model._modules[name] = layer_new
-            print(model._modules[name].weight.data)
+            # print(model._modules[name].weight.data)
         
         # if isinstance(m, nn.BatchNorm2d):
         #     layer_new = WrappedBatchNorm(m)
@@ -289,9 +297,6 @@ def eval_model(model, x_train, y_train, x_test, y_test, out_path, name):
     trainer = pl.Trainer(max_epochs = 1, default_root_dir = out_path, progress_bar_refresh_rate = 1)
     trainer.fit(model, train_dataloader, val_loader)
     model.eval() 
-
-    print(model)
-    print(model._modules["conv1"].weight.data)
     
     start_time = datetime.datetime.now()
     preds = model.predict(x_test)
@@ -301,37 +306,29 @@ def eval_model(model, x_train, y_train, x_test, y_test, out_path, name):
     accuracy = accuracy_score(y_test, preds)*100.0
 
     dummy_x = torch.randn(1, x_train.shape[1], requires_grad=False)
-    # dummy_x = torch.randn(1, 1, 28, 28, requires_grad=False)
-    print(dummy_x.shape)
-    print(dummy_x)
+
     print(x_train.shape)
     print(y_train.shape)
     print(x_test.shape)
     print(y_test.shape)
-    # print("14")
-    # start_time = datetime.datetime.now()
-    # print("15")
+    
+    start_time = datetime.datetime.now()
     # preds = []
-    # print("16")
     # for _ in range(x_test.shape[0]):
     #     preds.append(model.forward(dummy_x))
-    #     print("17")
-    # end_time = datetime.datetime.now()
-    # print("18")
-    # time_diff = (end_time - start_time)
-    # print("19")
-    # single_time = time_diff.total_seconds() * 1000
-    # print("20")
+    end_time = datetime.datetime.now()
+    time_diff = (end_time - start_time)
+    single_time = time_diff.total_seconds() * 1000
 
     djson = {
         "accuracy":accuracy,
         "name":name,
         "batch-latency": batch_time / x_test.shape[0],
-        "single-latency": 1 #single_time / x_test.shape[0]
+        "single-latency": single_time / x_test.shape[0]
     }
     print("Model accuracy is {}".format(djson["accuracy"]))
-    # print("batch-latency: {}".format(djson["batch-latency"]))
-    # print("single-latency: {}".format(djson["single-latency"]))
+    print("batch-latency: {}".format(djson["batch-latency"]))
+    print("single-latency: {}".format(djson["single-latency"]))
 
     with open(os.path.join(out_path, name + ".json"), "w") as outfile:  
         json.dump(djson, outfile) #, cls=NumpyEncoder
@@ -346,7 +343,6 @@ def eval_model(model, x_train, y_train, x_test, y_test, out_path, name):
     model = sanatize_onnx(model)
 
     print(model)
-    print(model._modules["conv1"].weight.data)
 
     # https://github.com/pytorch/pytorch/issues/49229
     # set torch.onnx.TrainingMode.PRESERVE

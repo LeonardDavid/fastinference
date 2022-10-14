@@ -28,9 +28,11 @@ def main():
     out_name = os.path.splitext(args.out)[0]
 
     print("Exporting data")
+    dfTrainLabels = pd.concat([pd.DataFrame(YTrain,columns=["label"])], axis=1)
     dfTrain = pd.concat([pd.DataFrame(XTrain, columns=["f{}".format(i) for i in range(len(XTrain[0]))]), pd.DataFrame(YTrain,columns=["label"])], axis=1)
     dfTest = pd.concat([pd.DataFrame(XTest, columns=["f{}".format(i) for i in range(len(XTrain[0]))]), pd.DataFrame(YTest,columns=["label"])], axis=1)
     
+    dfTrainLabels.to_csv(os.path.join(out_name, "labels.csv"), header=True, index=False)
     dfTrain.to_csv(os.path.join(out_name, "training.csv"), header=True, index=False)
     dfTest.to_csv(os.path.join(out_name, "testing.csv"), header=True, index=False)
 

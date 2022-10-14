@@ -1,7 +1,7 @@
 #pragma once 
 
 namespace FAST_INFERENCE {    
-    #define REF_ACCURACY 13.45
+    #define REF_ACCURACY 37.330000000000005
 
     #define N_CLASSES 10
     #define N_FEATURES 3072

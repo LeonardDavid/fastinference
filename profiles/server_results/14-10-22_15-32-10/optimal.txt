@@ -1,0 +1,26 @@
+optimal times for each batch size:
+batch_size 16: 1.83 + 0.24 = 2.07
+batch_size 32: 1.84 + 0.23 = 2.07
+batch_size 64: 1.86 + 0.25 = 2.11
+batch_size 8: 1.94 + 0.26 = 2.20
+batch_size 128: 1.91 + 0.40 = 2.31
+batch_size 256: 1.90 + 0.48 = 2.38
+batch_size 2: 2.50 + 0.00 = 2.50
+batch_size 4: 2.20 + 0.30 = 2.50
+batch_size 1: 2.58 + 0.00 = 2.58
+
+optimal batch_size: 16, cpu_time: 1.83, gpu_time: 0.24, total_time: 2.07
+
+optimal configuration for layer:
+1: implem: cpu
+2: implem: cpu
+3: implem: cpu
+4: implem: cpu
+5: implem: xz
+6: implem: z
+7: implem: cpu
+8: implem: cpu
+9: implem: cpu
+10: implem: cpu
+11: implem: cpu
+

@@ -1,0 +1,21 @@
+batch_size,layer_nr,implem,cpu time [s],gpu time [s],total time [s]
+4,1,automatic,0.0,0.0,0.0
+4,2,automatic,1.8,2.5,4.3
+4,3,automatic,8.93,0.0,8.93
+4,4,automatic,16.5,65.87,82.37
+4,5,automatic,0.17,0.0,0.17
+4,6,automatic,5.5,0.0,5.5
+4,7,automatic,10.16,28.64,38.8
+4,8,automatic,10.26,0.0,10.26
+4,9,automatic,11.83,57.58,69.41
+4,10,automatic,0.17,0.0,0.17
+4,11,automatic,3.55,0.0,3.55
+4,12,automatic,8.42,24.49,32.91
+4,13,automatic,6.91,0.0,6.91
+4,14,automatic,9.9,50.18,60.08
+4,15,automatic,0.04,0.0,0.04
+4,16,automatic,1.91,0.0,1.91
+4,17,automatic,0.0,0.0,0.0
+4,18,automatic,18.96,0.0,18.96
+4,19,automatic,0.06,0.0,0.06
+4,20,automatic,0.01,0.0,0.01

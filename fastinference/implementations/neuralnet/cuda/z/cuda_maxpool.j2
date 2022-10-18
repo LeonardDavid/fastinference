@@ -5,7 +5,7 @@ __global__ void layer{{layer_id}}_gpu_kernel({{input_type}} *d_cuda_layer_{{laye
     int h = threadIdx.x; // modified for work with multiple batches
     int w = blockDim.y * blockIdx.y + threadIdx.y;
 
-    int c = blockIdx.x; // Batches index in grid x dir
+    int c = blockIdx.z; // Neurons index in grid z dir
     
     {% if layer.pads == [0, 0, 0, 0] %}
     if(h < {{output_shape[2]}} && w < {{output_shape[3]}}){

@@ -37,7 +37,7 @@ def main():
         ("cpu",{"label_type":"int"},{"feature_type":"int"}),
         # ("x",{"label_type":"int"},{"feature_type":"int"}),
         # ("y",{"label_type":"int"},{"feature_type":"int"}),
-        # ("z",{"label_type":"int"},{"feature_type":"int"}),
+        #("z",{"label_type":"int"},{"feature_type":"int"}),
         # ("xy",{"label_type":"int"},{"feature_type":"int"}),
         # ("xz",{"label_type":"int"},{"feature_type":"int"}),
         # ("yz",{"label_type":"int"},{"feature_type":"int"}),

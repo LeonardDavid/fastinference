@@ -82,25 +82,119 @@ class SimpleCNN(pl.LightningModule):
         # fashion images are (1, 28, 28) (channels, width, height) 
         if binarize:
             print("===================================")
+
+            #############################################
+            ## 25.55% (actual) 78.8% (reference)
+            self.conv1_1 = BinaryConv2d(1, 128, 3, 1, 1)
+            self.bn_1 = nn.BatchNorm2d(128)
+            self.activation_1 = BinaryTanh()
+            self.conv1_2 = BinaryConv2d(128, 128, 3, 1, 1)
+            self.pool_1 = nn.MaxPool2d(2,2)
+            self.bn_2 = nn.BatchNorm2d(128)
+            self.activation_2 = BinaryTanh()
+
+            self.conv2_1 = BinaryConv2d(128, 256, 3, 1, 1)
+            self.bn_3 = nn.BatchNorm2d(256)
+            self.activation_3 = BinaryTanh()
+            self.conv2_2 = BinaryConv2d(256, 256, 3, 1, 1)
+            self.pool_2 = nn.MaxPool2d(2,2)
+            self.bn_4 = nn.BatchNorm2d(256)
+            self.activation_4 = BinaryTanh()
+
+            self.conv3_1 = BinaryConv2d(256, 512, 3, 1, 1)
+            self.bn_5 = nn.BatchNorm2d(512)
+            self.activation_5 = BinaryTanh()
+            self.conv3_2 = BinaryConv2d(512, 512, 3, 1, 1)
+            self.pool_3 = nn.MaxPool2d(2,2)
+            self.bn_6 = nn.BatchNorm2d(512)
+            self.activation_6 = BinaryTanh()
+
+            self.fc_1 = BinaryLinear(512 * 3 * 3, 512)
+            self.bn = nn.BatchNorm1d(512)
+            self.activation = BinaryTanh()
+            self.out = BinaryLinear(512, 10)
+
+            #############################################
+            ## 41.09% (actual) 75.39% (reference)
+            # self.conv1_1 = BinaryConv2d(1, 64, 3, 1, 1)
+            # self.bn_1 = nn.BatchNorm2d(64)
+            # self.activation_1 = BinaryTanh()
+            # self.conv1_2 = BinaryConv2d(64, 64, 3, 1, 1)
+            # self.pool_1 = nn.MaxPool2d(2,2)
+            # self.bn_2 = nn.BatchNorm2d(64)
+            # self.activation_2 = BinaryTanh()
+
+            # self.conv2_1 = BinaryConv2d(64, 128, 3, 1, 1)
+            # self.bn_3 = nn.BatchNorm2d(128)
+            # self.activation_3 = BinaryTanh()
+            # self.conv2_2 = BinaryConv2d(128, 128, 3, 1, 1)
+            # self.pool_2 = nn.MaxPool2d(2,2)
+            # self.bn_4 = nn.BatchNorm2d(128)
+            # self.activation_4 = BinaryTanh()
+
+            # self.fc_1 = BinaryLinear(128 * 7 * 7, 128)
+            # self.bn = nn.BatchNorm1d(128)
+            # self.activation = BinaryTanh()
+            # self.out = BinaryLinear(128, 10)
             
             ############################################
-            ## 64 neurons 1 padding 1 stride
+            ## 71% accuracy
+            # self.conv1 = BinaryConv2d(1, 128, 3, 1, 1)
+            # self.bn_1 = nn.BatchNorm2d(128)
+            # self.activation_1 = BinaryTanh()
+            # self.pool_1 = nn.MaxPool2d(2,2)
+
+            # self.conv2 = BinaryConv2d(128, 256, 3, 1, 1)
+            # self.bn_2 = nn.BatchNorm2d(256)
+            # self.activation_2 = BinaryTanh()
+            # self.pool_2 = nn.MaxPool2d(2,2)
+
+            # self.conv3 = BinaryConv2d(256, 512, 3, 1, 1)
+            # self.bn_3 = nn.BatchNorm2d(512)
+            # self.activation_3 = BinaryTanh()
+            # self.pool_3 = nn.MaxPool2d(2,2)
+
+            # self.fc_1 = BinaryLinear(512 * 3 * 3, 512)
+            # self.bn = nn.BatchNorm1d(512)
+            # self.activation = BinaryTanh()
+            # self.out = BinaryLinear(512, 10)
+
+            ############################################
+            ## 80.89% accuracy
+            # self.conv1 = BinaryConv2d(1, 128, 3, 1, 1)
+            # self.bn_1 = nn.BatchNorm2d(128)
+            # self.activation_1 = BinaryTanh()
+            # self.pool_1 = nn.MaxPool2d(2,2)
+
+            # self.conv2 = BinaryConv2d(128, 256, 3, 1, 1)
+            # self.bn_2 = nn.BatchNorm2d(256)
+            # self.activation_2 = BinaryTanh()
+            # self.pool_2 = nn.MaxPool2d(2,2)
+
+            # self.fc_1 = BinaryLinear(256 * 7 * 7, 256)
+            # self.bn = nn.BatchNorm1d(256)
+            # self.activation = BinaryTanh()
+            # self.out = BinaryLinear(256, 10)
+
+            ############################################
+            ## ~77% accuracy
+            ## [original] 64 neurons 1 padding 1 stride 
             ##self.conv1 = BinaryConv2d(in_channels=1, out_channels=32, kernel_size=(3,3), stride=(1,1), padding=(1,1))
 
-            self.conv1 = BinaryConv2d(1, 64, 3, 1, 1)
-            self.bn_1 = nn.BatchNorm2d(64)
-            self.activation_1 = BinaryTanh()
-            self.pool_1 = nn.MaxPool2d(2,2)
+            # self.conv1 = BinaryConv2d(1, 64, 3, 1, 1)
+            # self.bn_1 = nn.BatchNorm2d(64)
+            # self.activation_1 = BinaryTanh()
+            # self.pool_1 = nn.MaxPool2d(2,2)
 
-            self.conv2 = BinaryConv2d(64, 64, 3, 1, 1)
-            self.bn_2 = nn.BatchNorm2d(64)
-            self.activation_2 = BinaryTanh()
-            self.pool_2 = nn.MaxPool2d(2,2)
+            # self.conv2 = BinaryConv2d(64, 64, 3, 1, 1)
+            # self.bn_2 = nn.BatchNorm2d(64)
+            # self.activation_2 = BinaryTanh()
+            # self.pool_2 = nn.MaxPool2d(2,2)
 
-            self.fc_1 = BinaryLinear(64 * 7 * 7, 64)
-            self.bn = nn.BatchNorm1d(64)
-            self.activation = BinaryTanh()
-            self.out = BinaryLinear(64, 10)
+            # self.fc_1 = BinaryLinear(64 * 7 * 7, 64)
+            # self.bn = nn.BatchNorm1d(64)
+            # self.activation = BinaryTanh()
+            # self.out = BinaryLinear(64, 10)
 
             #############################################
             ## 64 neurons 0 padding 0 stride
@@ -156,15 +250,29 @@ class SimpleCNN(pl.LightningModule):
         batch_size = x.shape[0]
         x = x.view((batch_size, 1, 28, 28))
 
-        x = self.conv1(x)
+        x = self.conv1_1(x)
         x = self.bn_1(x)
         x = self.activation_1(x)
+        x = self.conv1_2(x)
         x = self.pool_1(x)
-
-        x = self.conv2(x)
         x = self.bn_2(x)
         x = self.activation_2(x)
+
+        x = self.conv2_1(x)
+        x = self.bn_3(x)
+        x = self.activation_3(x)
+        x = self.conv2_2(x)
         x = self.pool_2(x)
+        x = self.bn_4(x)
+        x = self.activation_4(x)
+
+        x = self.conv3_1(x)
+        x = self.bn_5(x)
+        x = self.activation_5(x)
+        x = self.conv3_2(x)
+        x = self.pool_3(x)
+        x = self.bn_6(x)
+        x = self.activation_6(x)
 
         x = x.view(batch_size, -1)
         x = self.fc_1(x)
@@ -172,6 +280,30 @@ class SimpleCNN(pl.LightningModule):
         x = self.activation(x)
         x = self.out(x)
         x = torch.log_softmax(x, dim=1)
+
+        ###########################################
+
+        # x = self.conv1(x)
+        # x = self.bn_1(x)
+        # x = self.activation_1(x)
+        # x = self.pool_1(x)
+
+        # x = self.conv2(x)
+        # x = self.bn_2(x)
+        # x = self.activation_2(x)
+        # x = self.pool_2(x)
+
+        # # x = self.conv3(x)
+        # # x = self.bn_3(x)
+        # # x = self.activation_3(x)
+        # # x = self.pool_3(x)
+
+        # x = x.view(batch_size, -1)
+        # x = self.fc_1(x)
+        # x = self.bn(x)
+        # x = self.activation(x)
+        # x = self.out(x)
+        # x = torch.log_softmax(x, dim=1)
         
         ###########################################
         

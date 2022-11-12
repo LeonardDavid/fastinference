@@ -100,7 +100,7 @@ def larger_datatype(dtype1, dtype2):
 
     return dtype1
 
-def render(layer, input_type, layer_id = 0, is_first = False, float_type = "double", int_type = "int", uint_type = "unsigned int", infer_types = False, align = 0,popcount = None):
+def render(layer, input_type, layer_id = 0, is_first = False, float_type = "double", int_type = "int", uint_type = "unsigned int", infer_types = False, align = 0, popcount = None, is_cifar = False):
 
     env = Environment(
         loader=FileSystemLoader(os.path.join(os.path.dirname(os.path.abspath(__file__)))),
@@ -292,7 +292,8 @@ def render(layer, input_type, layer_id = 0, is_first = False, float_type = "doub
             float_type = float_type,
             popcount = popcount,
             output_type = output_type,
-            input_type = input_type
+            input_type = input_type,
+            is_cifar = is_cifar
         )
 
     return code_alloc, code_init, code_predict, output_type
@@ -370,6 +371,11 @@ def to_implementation(model, out_path, out_name, weight = 1.0, namespace = "FAST
                 ).reshape(layer.weight.shape)
                 flatten = None
 
+        # checking which reshape.j2 to use
+        is_cifar = False
+        if "cifar" in kwargs['dataset']:
+            is_cifar = True
+
         a, i, p, input_type = render(
             layer,
             is_first = is_first,
@@ -380,7 +386,8 @@ def to_implementation(model, out_path, out_name, weight = 1.0, namespace = "FAST
             uint_type = uint_type,
             infer_types = infer_types,
             input_type = input_type,
-            popcount=popcount
+            popcount = popcount,
+            is_cifar = is_cifar
         )
 
         if isinstance(layer, (Gemm, Conv2D)):

@@ -101,7 +101,7 @@ def larger_datatype(dtype1, dtype2):
 
     return dtype1
 
-def render(layer, input_type, layer_id = 0, is_first = False, float_type = "double", int_type = "int", uint_type = "unsigned int", infer_types = False, align = 0, popcount = None, batch_size = 1, reshape_layer_id = 0, step_layer_ids = [], opt_implem = []):
+def render(layer, input_type, layer_id = 0, is_first = False, float_type = "double", int_type = "int", uint_type = "unsigned int", infer_types = False, align = 0, popcount = None, batch_size = 1, reshape_layer_id = 0, step_layer_ids = [], is_cifar = False, opt_implem = []):
 
     pkg_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), opt_implem[layer_id-1])
     env = Environment(
@@ -334,22 +334,39 @@ def render(layer, input_type, layer_id = 0, is_first = False, float_type = "doub
             else:
                 popcount = "__builtin_popcountll"
                 popcount_cuda = "__popcll"
-
-        code_predict = env.get_template(layer.name + '.j2').render(
-            layer = layer,
-            binary_word_size = binary_word_size,
-            layer_id = layer_id,
-            align = align,
-            int_type = int_type,
-            uint_type = uint_type,
-            float_type = float_type,
-            popcount = popcount,
-            output_type = output_type,
-            input_type = input_type,
-            is_first_gemm_after_reshape = is_first_gemm_after_reshape,
-            prev_layer_is_step = prev_layer_is_step,
-            batch_size = batch_size
-        )
+                
+        if is_cifar and isinstance(layer, Reshape):
+            code_predict = env.get_template(layer.name + '_cifar.j2').render(
+                layer = layer,
+                binary_word_size = binary_word_size,
+                layer_id = layer_id,
+                align = align,
+                int_type = int_type,
+                uint_type = uint_type,
+                float_type = float_type,
+                popcount = popcount,
+                output_type = output_type,
+                input_type = input_type,
+                is_first_gemm_after_reshape = is_first_gemm_after_reshape,
+                prev_layer_is_step = prev_layer_is_step,
+                batch_size = batch_size
+            )
+        else:
+            code_predict = env.get_template(layer.name + '.j2').render(
+                layer = layer,
+                binary_word_size = binary_word_size,
+                layer_id = layer_id,
+                align = align,
+                int_type = int_type,
+                uint_type = uint_type,
+                float_type = float_type,
+                popcount = popcount,
+                output_type = output_type,
+                input_type = input_type,
+                is_first_gemm_after_reshape = is_first_gemm_after_reshape,
+                prev_layer_is_step = prev_layer_is_step,
+                batch_size = batch_size
+            )
     
         ### CUDA
 
@@ -529,6 +546,11 @@ def to_implementation(model, out_path, out_name, weight = 1.0, namespace = "FAST
                 ).reshape(layer.weight.shape)
                 flatten = None
 
+        # checking which reshape.j2 to use
+        is_cifar = False
+        if "cifar" in kwargs['dataset']:
+            is_cifar = True
+
         a, i, p, cp, cih, ckh, input_type = render(
             layer,
             is_first = is_first,
@@ -543,6 +565,7 @@ def to_implementation(model, out_path, out_name, weight = 1.0, namespace = "FAST
             reshape_layer_id = reshape_layer_id,
             step_layer_ids = step_layer_ids,
             batch_size = batch_size,
+            is_cifar = is_cifar,
             opt_implem = opt_implem
         )
 

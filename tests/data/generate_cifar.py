@@ -19,8 +19,11 @@ def main():
     print("Downloading CIFAR10")
     X,y = fetch_openml(data_id=40927,return_X_y=True,as_frame=False,data_home=args.out,cache=True)
     
+    # if not args.float:
+    #     X = (X * 255).astype(int)
+
     if not args.float:
-        X = (X * 255).astype(int)
+        X = X.astype(int)
 
     XTrain, YTrain = X[:50000,:], y[:50000]
     XTest, YTest = X[50000:,:], y[50000:]

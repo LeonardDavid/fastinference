@@ -398,16 +398,19 @@ def test_implementations(model, dataset, split, implementations, now, base_optim
     #dfTest.to_csv(path_to_testfile, header=True, index=False)
 
     ## (mnist) test data and model 
+    # dataset = "mnist"
     # path_to_testfile = os.path.join("fastinference/implementations/neuralnet/cuda/automatic/data/test_data/testing.csv")
     # path_to_model = os.path.join("fastinference/implementations/neuralnet/cuda/automatic/model/test_model/cudatest.onnx")
 
     ## fashion data and model
-    path_to_testfile = os.path.join("fastinference/implementations/neuralnet/cuda/automatic/data/fashion/testing.csv")
-    path_to_model = os.path.join("fastinference/implementations/neuralnet/cuda/automatic/model/fashion/model_fashion.onnx")
+    # dataset = "fashion"
+    # path_to_testfile = os.path.join("fastinference/implementations/neuralnet/cuda/automatic/data/fashion/testing.csv")
+    # path_to_model = os.path.join("fastinference/implementations/neuralnet/cuda/automatic/model/fashion/model_fashion.onnx")
 
     ## cifar10 data and model
-    # path_to_testfile = os.path.join("fastinference/implementations/neuralnet/cuda/automatic/data/cifar10/testing.csv")
-    # path_to_model = os.path.join("fastinference/implementations/neuralnet/cuda/automatic/model/cifar10/model_cifar10.onnx")
+    dataset = "cifar10"
+    path_to_testfile = os.path.join("fastinference/implementations/neuralnet/cuda/automatic/data/cifar10/testing.csv")
+    path_to_model = os.path.join("fastinference/implementations/neuralnet/cuda/automatic/model/cifar10/model_cifar10.onnx")
 
     print(path_to_testfile)
     print(path_to_model)
@@ -420,13 +423,14 @@ def test_implementations(model, dataset, split, implementations, now, base_optim
 
     # set the batch size lower and upper bound (aka the powers of 2)
     b_l = 0
-    b_u = 9
+    b_u = 1
 
     for impl, bopt in itertools.product(implementations, base_optimizers):
         for batch_size in (2**p for p in range(b_l, b_u)): # batch_size incrementing in powers of 2
             out_path_ext = os.path.join(out_path, now, model_name + "/" + impl[0] + "/" + str(batch_size))
 
             impl[1]['batch_size'] = batch_size
+            impl[1]['dataset'] = dataset
 
             nr_layers = prepare_fastinference(path_to_model, out_path_ext, batch_size, impl_folder, implementation_type = impl[0], implementation_args = impl[1], base_optimizer = bopt[0], base_optimizer_args = bopt[1])
 
@@ -611,6 +615,7 @@ def test_implementations(model, dataset, split, implementations, now, base_optim
     out_path_ext = os.path.join(out_path, now, model_name + "/automatic/" + str(optimal_batch_size))
     impl_type = "automatic"
     impl_args = {}
+    impl_args['dataset'] = dataset
     impl_args["label_type"] = "int"
     impl_args["batch_size"] = optimal_batch_size
     # impl_args["opt_impl"] = ['xyz', 'xyz', 'cpu', 'cpu', 'cpu', 'cpu', 'cpu', 'cpu', 'cpu', 'cpu', 'yz']

@@ -19,4 +19,7 @@ profiles/
 *.ckpt
 fastinference/implementations/neuralnet/cuda/automatic/data/cifar10
 tmp/fastinference/cnntest_cifar
+tmp/fastinference/cnntest_cifar3
+tmp/fastinference/cnntest_cifar5
 tmp/fastinference/cifar10_train_test
+tmp/fastinference/cifar_onnx

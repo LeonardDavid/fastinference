@@ -111,7 +111,7 @@ class NeuralNet(Model):
         #node_iterator = iter(enumerate(graph.node))
         for node_id, node in enumerate(graph.node):
             print('Checking {}.'.format(node.op_type))
-
+            layer_exists = True
             if node.op_type == "Constant" and len(graph.node) > node_id + 5 and graph.node[node_id + 1].op_type == "Greater"\
                 and graph.node[node_id + 2].op_type == "Constant" and graph.node[node_id + 3].op_type == "Constant" and graph.node[node_id + 4].op_type == "Where":
                 print("Merging Constant {} -> Greater {} -> Constant {} -> Constant {} -> Where {} into Step layer".format(node_id, node_id + 1, node_id + 2, node_id + 3, node_id + 4))
@@ -130,20 +130,22 @@ class NeuralNet(Model):
                 try:
                     layer = layer_from_node(graph, node, input_shape)
                 except Exception as e:
+                    layer_exists = False
                     print(e)
                     print("Exception for node {} of type {} occured.".format(node_id, node.op_type))
             
-            self.layers.append(layer)
-            print("input shape is {}".format(input_shape))
-            if hasattr(layer, "weight"):
-                print("weight shape is {}".format(layer.weight.shape))
-            if hasattr(layer, "scale"):
-                print("scale shape is {}".format(layer.scale.shape))
-            if hasattr(layer, "bias"):
-                print("bias shape is {}".format(layer.bias.shape))
-            print("output shape is {}".format(layer.output_shape))
-            print("")
-            input_shape = layer.output_shape
+            if layer_exists:
+                self.layers.append(layer)
+                print("input shape is {}".format(input_shape))
+                if hasattr(layer, "weight"):
+                    print("weight shape is {}".format(layer.weight.shape))
+                if hasattr(layer, "scale"):
+                    print("scale shape is {}".format(layer.scale.shape))
+                if hasattr(layer, "bias"):
+                    print("bias shape is {}".format(layer.bias.shape))
+                print("output shape is {}".format(layer.output_shape))
+                print("")
+                input_shape = layer.output_shape
         
         # TODO There might be an actual class mapping in the onnx file?
         n_features = graph.input[0].type.tensor_type.shape.dim[1].dim_value

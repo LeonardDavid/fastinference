@@ -101,7 +101,7 @@ def larger_datatype(dtype1, dtype2):
 
     return dtype1
 
-def render(layer, input_type, layer_id = 0, is_first = False, float_type = "double", int_type = "int", uint_type = "unsigned int", infer_types = False, align = 0, popcount = None, batch_size = 1, reshape_layer_id = 0, step_layer_ids = [], is_cifar = False, opt_implem = []):
+def render(layer, input_type, layer_id = 0, is_first = False, float_type = "double", int_type = "int", uint_type = "unsigned int", infer_types = False, align = 0, popcount = None, batch_size = 1, reshape_layer_id = 0, step_layer_ids = [], is_cifar = False, is_conv_after_step = False, opt_implem = []):
 
     pkg_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), opt_implem[layer_id-1])
     env = Environment(
@@ -335,38 +335,23 @@ def render(layer, input_type, layer_id = 0, is_first = False, float_type = "doub
                 popcount = "__builtin_popcountll"
                 popcount_cuda = "__popcll"
                 
-        if is_cifar and isinstance(layer, Reshape):
-            code_predict = env.get_template(layer.name + '_cifar.j2').render(
-                layer = layer,
-                binary_word_size = binary_word_size,
-                layer_id = layer_id,
-                align = align,
-                int_type = int_type,
-                uint_type = uint_type,
-                float_type = float_type,
-                popcount = popcount,
-                output_type = output_type,
-                input_type = input_type,
-                is_first_gemm_after_reshape = is_first_gemm_after_reshape,
-                prev_layer_is_step = prev_layer_is_step,
-                batch_size = batch_size
-            )
-        else:
-            code_predict = env.get_template(layer.name + '.j2').render(
-                layer = layer,
-                binary_word_size = binary_word_size,
-                layer_id = layer_id,
-                align = align,
-                int_type = int_type,
-                uint_type = uint_type,
-                float_type = float_type,
-                popcount = popcount,
-                output_type = output_type,
-                input_type = input_type,
-                is_first_gemm_after_reshape = is_first_gemm_after_reshape,
-                prev_layer_is_step = prev_layer_is_step,
-                batch_size = batch_size
-            )
+        code_predict = env.get_template(layer.name + '.j2').render(
+            layer = layer,
+            binary_word_size = binary_word_size,
+            layer_id = layer_id,
+            align = align,
+            int_type = int_type,
+            uint_type = uint_type,
+            float_type = float_type,
+            popcount = popcount,
+            output_type = output_type,
+            input_type = input_type,
+            is_first_gemm_after_reshape = is_first_gemm_after_reshape,
+            prev_layer_is_step = prev_layer_is_step,
+            batch_size = batch_size,
+            is_cifar = is_cifar, 
+            is_conv_after_step = is_conv_after_step
+        )
     
         ### CUDA
 
@@ -528,6 +513,13 @@ def to_implementation(model, out_path, out_name, weight = 1.0, namespace = "FAST
         # if layer_id == reshape_layer_id + 1:
         #     print("FIRST GEMM LAYER!")
 
+        # different indexing of array after step while reshaping for GPU, depending if next layer is maxpool or conv2d
+        is_conv_after_step = False
+        if isinstance(layer, Step):
+            for layer_id2, layer2 in enumerate(model.layers):
+                if layer_id2 == layer_id + 1 and isinstance(layer2, Conv2D):
+                    is_conv_after_step = True
+
         if isinstance(layer, Reshape) and len(layer.output_shape) > 2:
             layer.output_shape = (layer.output_shape[0], *layer.output_shape[2:], layer.output_shape[1])
 
@@ -566,6 +558,7 @@ def to_implementation(model, out_path, out_name, weight = 1.0, namespace = "FAST
             step_layer_ids = step_layer_ids,
             batch_size = batch_size,
             is_cifar = is_cifar,
+            is_conv_after_step = is_conv_after_step,
             opt_implem = opt_implem
         )
 

@@ -2,15 +2,37 @@
  # Reshape
  #}
 
-// Layer {{ layer_id }}: Reshape
 {% if layer.output_shape|length > 2 %}
-auto layer_{{ layer_id }}_output = ({{ input_type }} (*)[{{ layer.output_shape[2:]|join('][') }}]) layer_{{ layer_id - 1 }}_output;
+
+{% if is_cifar == true and layer_id == 1%}
+// Layer {{ layer_id }}: Reshape CIFAR
+{{input_type}} layer_{{layer_id}}_output[{{batch_size}}][{{layer.output_shape[1]}}][{{layer.output_shape[2]}}][{{layer.output_shape[3]}}];
+
+for(int b = 0; b < {{batch_size}}; b++){
+    for(int c = 0; c < {{layer.output_shape[3]}}; c++){
+        for(int i = 0; i < {{layer.output_shape[1]}}; i++){
+            for(int j = 0; j < {{layer.output_shape[2]}}; j++){
+                layer_{{layer_id}}_output[b][i][j][c] = layer_{{layer_id - 1}}_output[b*{{layer.output_shape[1]}}*{{layer.output_shape[2]}}*{{layer.output_shape[3]}} + c*{{layer.output_shape[1]}}*{{layer.output_shape[2]}} + i*{{layer.output_shape[1]}} + j];
+                //layer_{{layer_id}}_output[b][i][j][c] = layer_{{layer_id - 1}}_output[index4D(b,c,i,j,{{layer.output_shape[1]}},{{layer.output_shape[2]}},{{layer.output_shape[3]}})];
+            }
+        }
+    }
+}
 
 // flatten layer_{{layer_id}}_output for CUDA functions
 {{input_type}} *cuda_layer_{{layer_id}}_output = ({{input_type}} *) layer_{{layer_id}}_output;
+
 {% else %}
+// Layer {{ layer_id }}: Reshape
+auto layer_{{ layer_id }}_output = ({{ input_type }} (*)[{{ layer.output_shape[2:]|join('][') }}]) layer_{{ layer_id - 1 }}_output;
+
+{% endif %}
+
+{% else %}
+
 // auto layer_{{ layer_id }}_output = ({{ input_type }} (*)) layer_{{ layer_id - 1 }}_output;
 auto cuda_layer_{{ layer_id }}_output = ({{ input_type }} (*)) cuda_layer_{{ layer_id - 1 }}_output;
+
 {% endif %}
 
 // variables for compatibility

@@ -84,38 +84,8 @@ class SimpleCNN(pl.LightningModule):
             print("===================================")
 
             ##############################################
-            ## nn6_23.68%
-            # self.conv1_1 = BinaryConv2d(3, 128, 3, 1, 1)
-            # self.bn_1 = nn.BatchNorm2d(128)
-            # self.activation_1 = BinaryTanh()
-            # self.conv1_2 = BinaryConv2d(128, 128, 3, 1, 1)
-            # self.bn_2 = nn.BatchNorm2d(128)
-            # self.activation_2 = BinaryTanh()
-            # self.pool_1 = nn.MaxPool2d(2,2)
-
-            # self.conv2_1 = BinaryConv2d(128, 256, 3, 1, 1)
-            # self.bn_3 = nn.BatchNorm2d(256)
-            # self.activation_3 = BinaryTanh()
-            # self.conv2_2 = BinaryConv2d(256, 256, 3, 1, 1)
-            # self.bn_4 = nn.BatchNorm2d(256)
-            # self.activation_4 = BinaryTanh()
-            # self.pool_2 = nn.MaxPool2d(2,2)
-
-            # self.conv3_1 = BinaryConv2d(256, 512, 3, 1, 1)
-            # self.bn_5 = nn.BatchNorm2d(512)
-            # self.activation_5 = BinaryTanh()
-            # self.conv3_2 = BinaryConv2d(512, 512, 3, 1, 1)
-            # self.bn_6 = nn.BatchNorm2d(512)
-            # self.activation_6 = BinaryTanh()
-            # self.pool_3 = nn.MaxPool2d(2,2)
-
-            # self.fc_1 = BinaryLinear(512 * 4 * 4, 512)
-            # self.bn = nn.BatchNorm1d(512)
-            # self.activation = BinaryTanh()
-            # self.out = BinaryLinear(512, 10)
-
-            ############################################
-            ## nn5_33.06%
+            ## nn6_1ep_23.27% | nn6_5ep_37.75% | nn6_10ep_42.16% | 
+            ## nn6_20ep_61.16% | nn6_50ep_66.54% | nn6_100ep_%
             self.conv1_1 = BinaryConv2d(3, 128, 3, 1, 1)
             self.bn_1 = nn.BatchNorm2d(128)
             self.activation_1 = BinaryTanh()
@@ -132,10 +102,42 @@ class SimpleCNN(pl.LightningModule):
             self.activation_4 = BinaryTanh()
             self.pool_2 = nn.MaxPool2d(2,2)
 
-            self.fc_1 = BinaryLinear(256 * 8 * 8, 256)
-            self.bn = nn.BatchNorm1d(256)
+            self.conv3_1 = BinaryConv2d(256, 512, 3, 1, 1)
+            self.bn_5 = nn.BatchNorm2d(512)
+            self.activation_5 = BinaryTanh()
+            self.conv3_2 = BinaryConv2d(512, 512, 3, 1, 1)
+            self.bn_6 = nn.BatchNorm2d(512)
+            self.activation_6 = BinaryTanh()
+            self.pool_3 = nn.MaxPool2d(2,2)
+
+            self.fc_1 = BinaryLinear(512 * 4 * 4, 512)
+            self.bn = nn.BatchNorm1d(512)
             self.activation = BinaryTanh()
-            self.out = BinaryLinear(256, 10)
+            self.out = BinaryLinear(512, 10)
+
+            ############################################
+            ## nn5_1ep_33.06% | nn5_5ep_45.28% | nn5_10ep_54.2%
+            ## nn5_20ep_58.47% | nn5_50ep_57.37% | nn5_100ep_62.03%
+            # self.conv1_1 = BinaryConv2d(3, 128, 3, 1, 1)
+            # self.bn_1 = nn.BatchNorm2d(128)
+            # self.activation_1 = BinaryTanh()
+            # self.conv1_2 = BinaryConv2d(128, 128, 3, 1, 1)
+            # self.bn_2 = nn.BatchNorm2d(128)
+            # self.activation_2 = BinaryTanh()
+            # self.pool_1 = nn.MaxPool2d(2,2)
+
+            # self.conv2_1 = BinaryConv2d(128, 256, 3, 1, 1)
+            # self.bn_3 = nn.BatchNorm2d(256)
+            # self.activation_3 = BinaryTanh()
+            # self.conv2_2 = BinaryConv2d(256, 256, 3, 1, 1)
+            # self.bn_4 = nn.BatchNorm2d(256)
+            # self.activation_4 = BinaryTanh()
+            # self.pool_2 = nn.MaxPool2d(2,2)
+
+            # self.fc_1 = BinaryLinear(256 * 8 * 8, 256)
+            # self.bn = nn.BatchNorm1d(256)
+            # self.activation = BinaryTanh()
+            # self.out = BinaryLinear(256, 10)
             
             ############################################
             ## nn1_25.55%
@@ -334,13 +336,13 @@ class SimpleCNN(pl.LightningModule):
         x = self.activation_4(x)
         x = self.pool_2(x)
 
-        # x = self.conv3_1(x)
-        # x = self.bn_5(x)
-        # x = self.activation_5(x)
-        # x = self.conv3_2(x)
-        # x = self.bn_6(x)
-        # x = self.activation_6(x)
-        # x = self.pool_3(x)
+        x = self.conv3_1(x)
+        x = self.bn_5(x)
+        x = self.activation_5(x)
+        x = self.conv3_2(x)
+        x = self.bn_6(x)
+        x = self.activation_6(x)
+        x = self.pool_3(x)
 
         x = x.view(batch_size, -1)
         x = self.fc_1(x)
@@ -507,7 +509,7 @@ def eval_model(model, x_train, y_train, x_test, y_test, out_path, name):
     train_dataloader = DataLoader(TensorDataset(x_train_tensor, y_train_tensor), batch_size=64, num_workers=12)
     val_loader = None #DataLoader(TensorDataset(x_test_tensor, y_test_tensor), batch_size=64, num_workers=12)
 
-    trainer = pl.Trainer(max_epochs = 1, default_root_dir = out_path) #, progress_bar_refresh_rate = 1)
+    trainer = pl.Trainer(max_epochs = 100, default_root_dir = out_path, gpus=1) #, progress_bar_refresh_rate = 1)
     trainer.fit(model, train_dataloader, val_loader)
     model.eval() 
     

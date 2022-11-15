@@ -409,8 +409,12 @@ def test_implementations(model, dataset, split, implementations, now, base_optim
 
     ## cifar10 data and model
     dataset = "cifar10"
-    path_to_testfile = os.path.join("fastinference/implementations/neuralnet/cuda/automatic/data/cifar10/testing.csv")
-    path_to_model = os.path.join("fastinference/implementations/neuralnet/cuda/automatic/model/cifar10/model_cifar10.onnx")
+    # path_to_testfile = os.path.join("fastinference/implementations/neuralnet/cuda/automatic/data/cifar10/testing.csv")
+    # path_to_model = os.path.join("fastinference/implementations/neuralnet/cuda/automatic/model/cifar10/model_cifar10.onnx")
+
+    path_to_testfile = os.path.join("fastinference/implementations/neuralnet/cuda/automatic/data/cifar10_test/testing.csv")
+    path_to_model = os.path.join("fastinference/implementations/neuralnet/cuda/automatic/model/cifar10_test/model_cifar10.onnx")
+
 
     print(path_to_testfile)
     print(path_to_model)
@@ -422,8 +426,8 @@ def test_implementations(model, dataset, split, implementations, now, base_optim
     print('\n')
 
     # set the batch size lower and upper bound (aka the powers of 2)
-    b_l = 0
-    b_u = 1
+    b_l = 3
+    b_u = 4
 
     for impl, bopt in itertools.product(implementations, base_optimizers):
         for batch_size in (2**p for p in range(b_l, b_u)): # batch_size incrementing in powers of 2

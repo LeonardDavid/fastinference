@@ -32,7 +32,11 @@ for(int b = 0; b < {{batch_size}}; b++){
   for (int h = 0; h < {{ layer.output_shape[2] }}; h++) {
     for (int w = 0; w < {{ layer.output_shape[3] }}; w++) {
       for (int c = 0; c < {{ (layer.output_shape[1] / binary_word_size)|round(method='ceil')|int }}; c++) {
+        {% if is_conv_after_step == True %}
+        cuda_layer_{{ layer_id }}_output[index4D(b,h,w,c,{{ layer.output_shape[2] }},{{ layer.output_shape[3] }},{{ (layer.output_shape[1] / binary_word_size)|round(method='ceil')|int }})] = layer_{{ layer_id }}_output[b][h][w][c];
+        {% else %}
         cuda_layer_{{ layer_id }}_output[index4D(b,h,w,c,{{ layer.output_shape[2] }},{{ layer.output_shape[3] }},{{ layer.output_shape[1] }})] = layer_{{ layer_id }}_output[b][h][w][c];
+        {% endif %} 
       }
     }
   }

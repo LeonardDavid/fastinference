@@ -12,8 +12,8 @@ for(int b = 0; b < {{batch_size}}; b++){
     for(int c = 0; c < {{layer.output_shape[3]}}; c++){
         for(int i = 0; i < {{layer.output_shape[1]}}; i++){
             for(int j = 0; j < {{layer.output_shape[2]}}; j++){
-                //layer_{{layer_id}}_output[b][i][j][c] = layer_{{layer_id - 1}}_output[b*{{batch_size}} + c*{{layer.output_shape[1]}}*{{layer.output_shape[2]}} + i*{{layer.output_shape[1]}} + j];
-                layer_{{layer_id}}_output[b][i][j][c] = layer_{{layer_id - 1}}_output[index4D(b,c,i,j,{{layer.output_shape[1]}},{{layer.output_shape[2]}},{{layer.output_shape[3]}})];
+                layer_{{layer_id}}_output[b][i][j][c] = layer_{{layer_id - 1}}_output[b*{{layer.output_shape[1]}}*{{layer.output_shape[2]}}*{{layer.output_shape[3]}} + c*{{layer.output_shape[1]}}*{{layer.output_shape[2]}} + i*{{layer.output_shape[1]}} + j];
+                //layer_{{layer_id}}_output[b][i][j][c] = layer_{{layer_id - 1}}_output[index4D(b,c,i,j,{{layer.output_shape[1]}},{{layer.output_shape[2]}},{{layer.output_shape[3]}})];
             }
         }
     }

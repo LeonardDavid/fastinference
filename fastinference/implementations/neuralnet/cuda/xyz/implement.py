@@ -101,7 +101,7 @@ def larger_datatype(dtype1, dtype2):
 
     return dtype1
 
-def render(layer, input_type, layer_id = 0, is_first = False, float_type = "double", int_type = "int", uint_type = "unsigned int", infer_types = False, align = 0, popcount = None, batch_size = 1, reshape_layer_id = 0, step_layer_ids = []):
+def render(layer, input_type, layer_id = 0, is_first = False, float_type = "double", int_type = "int", uint_type = "unsigned int", infer_types = False, align = 0, popcount = None, batch_size = 1, reshape_layer_id = 0, step_layer_ids = [], is_cifar = False, is_conv_after_step = False):
 
 #loop?
     env = Environment(
@@ -348,7 +348,9 @@ def render(layer, input_type, layer_id = 0, is_first = False, float_type = "doub
             input_type = input_type,
             is_first_gemm_after_reshape = is_first_gemm_after_reshape,
             prev_layer_is_step = prev_layer_is_step,
-            batch_size = batch_size
+            batch_size = batch_size,
+            is_cifar = is_cifar,
+            is_conv_after_step = is_conv_after_step
         )
     
         ### CUDA
@@ -507,6 +509,13 @@ def to_implementation(model, out_path, out_name, weight = 1.0, namespace = "FAST
         # if layer_id == reshape_layer_id + 1:
         #     print("FIRST GEMM LAYER!")
 
+        # different indexing of array after step while reshaping for GPU, depending if next layer is maxpool or conv2d
+        is_conv_after_step = False
+        if isinstance(layer, Step):
+            for layer_id2, layer2 in enumerate(model.layers):
+                if layer_id2 == layer_id + 1 and isinstance(layer2, Conv2D):
+                    is_conv_after_step = True
+
         if isinstance(layer, Reshape) and len(layer.output_shape) > 2:
             layer.output_shape = (layer.output_shape[0], *layer.output_shape[2:], layer.output_shape[1])
 
@@ -525,6 +534,10 @@ def to_implementation(model, out_path, out_name, weight = 1.0, namespace = "FAST
                 ).reshape(layer.weight.shape)
                 flatten = None
 
+        is_cifar = False
+        if "cifar" in kwargs['dataset']:
+            is_cifar = True
+
         a, i, p, cp, cih, ckh, input_type = render(
             layer,
             is_first = is_first,
@@ -538,7 +551,9 @@ def to_implementation(model, out_path, out_name, weight = 1.0, namespace = "FAST
             popcount = popcount,
             reshape_layer_id = reshape_layer_id,
             step_layer_ids = step_layer_ids,
-            batch_size = batch_size
+            batch_size = batch_size,
+            is_cifar = is_cifar, 
+            is_conv_after_step = is_conv_after_step
         )
 
         if isinstance(layer, (Gemm, Conv2D)):

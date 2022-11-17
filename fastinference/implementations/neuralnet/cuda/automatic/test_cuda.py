@@ -35,7 +35,7 @@ def main():
 
     implementations = [ 
         ("cpu",{"label_type":"int"},{"feature_type":"int"}),
-        ("x",{"label_type":"int"},{"feature_type":"int"}),
+        ("x",{"label_type":"int"},{"feature_type":"int"}), # on jetson tx2 -> x only works up to batch size 4, no idea why
         ("y",{"label_type":"int"},{"feature_type":"int"}),
         ("z",{"label_type":"int"},{"feature_type":"int"}),
         ("xy",{"label_type":"int"},{"feature_type":"int"}),

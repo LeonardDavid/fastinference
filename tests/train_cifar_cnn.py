@@ -85,7 +85,7 @@ class SimpleCNN(pl.LightningModule):
 
             ##############################################
             ## nn6_1ep_23.27% | nn6_5ep_37.75% | nn6_10ep_42.16% | 
-            ## nn6_20ep_61.16% | nn6_50ep_66.54% | nn6_100ep_%
+            ## nn6_20ep_61.16% | nn6_50ep_66.54% | nn6_100ep_67.08%
             self.conv1_1 = BinaryConv2d(3, 128, 3, 1, 1)
             self.bn_1 = nn.BatchNorm2d(128)
             self.activation_1 = BinaryTanh()

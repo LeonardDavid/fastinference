@@ -21,7 +21,7 @@ import subprocess
 def main():
     parser = argparse.ArgumentParser(description='Benchmark various tree optimizations on the supplied dataset.')
     parser.add_argument('--outpath', required=True, help='Folder where data should written to.')
-    parser.add_argument('--dataset','-d', required=True, help='Dataset to to be downloaded and used. Currently supported are {magic, mnist, fashion, eeg}.')
+    parser.add_argument('--dataset','-d', required=True, help='Dataset to to be downloaded and used. Currently supported are {magic, mnist, fashion, eeg, cifar10}.')
     parser.add_argument('--modelname', required=False, default="model", help='Modelname')
     parser.add_argument('--split','-s', required=False, default=0.2, type=float, help='Test/Train split.')
     args = parser.parse_args()

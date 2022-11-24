@@ -426,8 +426,8 @@ def test_implementations(model, dataset, split, implementations, now, base_optim
     print('\n')
 
     # set the batch size lower and upper bound (aka the powers of 2)
-    b_l = 3
-    b_u = 4
+    b_l = 0
+    b_u = 8
     # max b_u = 8 => max 2^7 = 128 (batch_size)
 
     for impl, bopt in itertools.product(implementations, base_optimizers):

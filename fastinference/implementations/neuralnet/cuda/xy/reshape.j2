@@ -19,14 +19,15 @@ for(int b = 0; b < {{batch_size}}; b++){
     }
 }
 
-// flatten layer_{{layer_id}}_output for CUDA functions
-{{input_type}} *cuda_layer_{{layer_id}}_output = ({{input_type}} *) layer_{{layer_id}}_output;
-
 {% else %}
 // Layer {{ layer_id }}: Reshape
 auto layer_{{ layer_id }}_output = ({{ input_type }} (*)[{{ layer.output_shape[2:]|join('][') }}]) layer_{{ layer_id - 1 }}_output;
 
 {% endif %}
+
+// flatten layer_{{layer_id}}_output for CUDA functions
+{{input_type}} *cuda_layer_{{layer_id}}_output = ({{input_type}} *) layer_{{layer_id}}_output;
+
 
 {% else %}
 

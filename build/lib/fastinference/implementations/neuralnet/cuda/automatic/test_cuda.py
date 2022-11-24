@@ -21,7 +21,7 @@ import subprocess
 def main():
     parser = argparse.ArgumentParser(description='Benchmark various tree optimizations on the supplied dataset.')
     parser.add_argument('--outpath', required=True, help='Folder where data should written to.')
-    parser.add_argument('--dataset','-d', required=True, help='Dataset to to be downloaded and used. Currently supported are {magic, mnist, fashion, eeg}.')
+    parser.add_argument('--dataset','-d', required=True, help='Dataset to to be downloaded and used. Currently supported are {magic, mnist, fashion, eeg, cifar10}.')
     parser.add_argument('--modelname', required=False, default="model", help='Modelname')
     parser.add_argument('--split','-s', required=False, default=0.2, type=float, help='Test/Train split.')
     args = parser.parse_args()
@@ -34,14 +34,14 @@ def main():
     # XTrain, YTrain, _, _ = get_dataset(args.dataset,split=args.split)
 
     implementations = [ 
-        # ("cpu",{"label_type":"int"},{"feature_type":"int"}),
-        # ("x",{"label_type":"int"},{"feature_type":"int"}),
+        ("cpu",{"label_type":"int"},{"feature_type":"int"}),
+        ("x",{"label_type":"int"},{"feature_type":"int"}), # on jetson tx2 -> x only works up to batch size 4, no idea why
         ("y",{"label_type":"int"},{"feature_type":"int"}),
-        # ("z",{"label_type":"int"},{"feature_type":"int"}),
-        # ("xy",{"label_type":"int"},{"feature_type":"int"}),
+        ("z",{"label_type":"int"},{"feature_type":"int"}),
+        ("xy",{"label_type":"int"},{"feature_type":"int"}),
         ("xz",{"label_type":"int"},{"feature_type":"int"}),
-        # ("yz",{"label_type":"int"},{"feature_type":"int"}),
-        # ("xyz",{"label_type":"int"},{"feature_type":"int"})
+        ("yz",{"label_type":"int"},{"feature_type":"int"}),
+        ("xyz",{"label_type":"int"},{"feature_type":"int"})
     ]
 
     out_path = args.outpath

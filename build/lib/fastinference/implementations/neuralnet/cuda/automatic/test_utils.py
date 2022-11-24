@@ -403,17 +403,17 @@ def test_implementations(model, dataset, split, implementations, now, base_optim
     # path_to_model = os.path.join("fastinference/implementations/neuralnet/cuda/automatic/model/test_model/cudatest.onnx")
 
     ## fashion data and model
-    # dataset = "fashion"
-    # path_to_testfile = os.path.join("fastinference/implementations/neuralnet/cuda/automatic/data/fashion/testing.csv")
-    # path_to_model = os.path.join("fastinference/implementations/neuralnet/cuda/automatic/model/fashion/model_fashion.onnx")
+    dataset = "fashion"
+    path_to_testfile = os.path.join("fastinference/implementations/neuralnet/cuda/automatic/data/fashion/testing.csv")
+    path_to_model = os.path.join("fastinference/implementations/neuralnet/cuda/automatic/model/fashion/model_fashion.onnx")
 
     ## cifar10 data and model
-    dataset = "cifar10"
+    #dataset = "cifar10"
     # path_to_testfile = os.path.join("fastinference/implementations/neuralnet/cuda/automatic/data/cifar10/testing.csv")
     # path_to_model = os.path.join("fastinference/implementations/neuralnet/cuda/automatic/model/cifar10/model_cifar10.onnx")
 
-    path_to_testfile = os.path.join("fastinference/implementations/neuralnet/cuda/automatic/data/cifar10_test/testing.csv")
-    path_to_model = os.path.join("fastinference/implementations/neuralnet/cuda/automatic/model/cifar10_test/model_cifar10.onnx")
+    # path_to_testfile = os.path.join("fastinference/implementations/neuralnet/cuda/automatic/data/cifar10_test/testing.csv")
+    # path_to_model = os.path.join("fastinference/implementations/neuralnet/cuda/automatic/model/cifar10_test/model_cifar10.onnx")
 
 
     print(path_to_testfile)
@@ -428,6 +428,7 @@ def test_implementations(model, dataset, split, implementations, now, base_optim
     # set the batch size lower and upper bound (aka the powers of 2)
     b_l = 3
     b_u = 4
+    # max b_u = 8 => max 2^7 = 128 (batch_size)
 
     for impl, bopt in itertools.product(implementations, base_optimizers):
         for batch_size in (2**p for p in range(b_l, b_u)): # batch_size incrementing in powers of 2

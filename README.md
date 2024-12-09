@@ -2,6 +2,8 @@
 
 HEP-BNN is a framework for finding Low-Latency execution configurations of BNNs on Heterogeneous multiprocessor platforms.
 
+Presentation [Paper on arXiv](https://arxiv.org/pdf/2301.05126)
+
 # How to install
 
 First set up a conda environment with all the necessary dependencies:
@@ -37,7 +39,10 @@ Call the following command:
 
     fastinference/implementations/neuralnet/cuda/automatic/test_cuda.py --outpath tmp/fastinference/cuda_auto --dataset cifar
     
-   
+# Contact
+
+Maintaner [leonard.bereholschi@tu-dortmund.de](mailto:leonard.bereholschi@tu-dortmund.de)
+
 # Acknowledgements
 
-Special thanks goes to [Sebastian Buschjäger](sebastian.buschjaeger@tu-dortmund.de/) for providing the original fastinference framework as a baseline.
+Special thanks goes to [Sebastian Buschjäger](https://github.com/sbuschjaeger) for providing the original FastInference framework as a base.
